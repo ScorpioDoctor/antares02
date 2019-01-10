@@ -8,24 +8,16 @@
 
 
 ######################################################################
-# In this tutorial, we explore a fun and interesting use-case of recurrent
-# sequence-to-sequence models. We will train a simple chatbot using movie
-# scripts from the `Cornell Movie-Dialogs
-# Corpus <https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html>`__.
+# 在本教程中，我们将探索一个有趣而有意思的用例-递归序列到序列模型(recurrent sequence-to-sequence models)的用例。
+# 我们将训练一个简单的聊天机器人使用康奈尔电影剧本-对话语料库
+# (`Cornell Movie-Dialogs Corpus <https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html>`__)。
 #
-# Conversational models are a hot topic in artificial intelligence
-# research. Chatbots can be found in a variety of settings, including
-# customer service applications and online helpdesks. These bots are often
-# powered by retrieval-based models, which output predefined responses to
-# questions of certain forms. In a highly restricted domain like a
-# company’s IT helpdesk, these models may be sufficient, however, they are
-# not robust enough for more general use-cases. Teaching a machine to
-# carry out a meaningful conversation with a human in multiple domains is
-# a research question that is far from solved. Recently, the deep learning
-# boom has allowed for powerful generative models like Google’s `Neural
-# Conversational Model <https://arxiv.org/abs/1506.05869>`__, which marks
-# a large step towards multi-domain generative conversational models. In
-# this tutorial, we will implement this kind of model in PyTorch.
+# 会话模型(Conversational models)是人工智能研究的一个热点。聊天机器人(Chatbots)可以在多种场景中找到，包括客户服务应用程序和在线帮助台。
+# 这些机器人通常由基于检索的模型(retrieval-based models)进行驱动，这些模型输出对某些形式的问题的预定义的回答。
+# 在一个高度受限的领域，比如一个公司的IT服务台，这些模型可能已经足够了，但是对于更一般的用例来说，它们还不够健壮。
+# 教一台机器在多个领域与人进行有意义的对话是一个远未解决的研究问题。最近，深度学习的热潮已经允许强大的生成模型，
+# 如谷歌的神经会话模型(`Neural Conversational Model <https://arxiv.org/abs/1506.05869>`__)，
+# 这标志着向多域生成会话模型(multi-domain generative conversational models)迈出了一大步。在本教程中，我们将在PyTorch中实现这种模型。
 #
 # .. figure:: /_static/img/chatbot/bot.png
 #    :align: center
@@ -54,20 +46,18 @@
 #   > goodbye
 #   Bot: goodbye .
 #
-# **Tutorial Highlights**
+# **本教程亮点**
 #
-# -  Handle loading and preprocessing of `Cornell Movie-Dialogs
-#    Corpus <https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html>`__
-#    dataset
-# -  Implement a sequence-to-sequence model with `Luong attention
-#    mechanism(s) <https://arxiv.org/abs/1508.04025>`__
-# -  Jointly train encoder and decoder models using mini-batches
-# -  Implement greedy-search decoding module
-# -  Interact with trained chatbot
+# -  加载和预处理 `Cornell Movie-Dialogs Corpus <https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html>`__
+#    数据集
+# -  实现一个带有 `Luong 注意力机制(s) <https://arxiv.org/abs/1508.04025>`__ 的序列到序列模型(sequence-to-sequence model)
+# -  使用 mini-batches 联合训练编码器和解码器模型(encoder and decoder models)
+# -  实现贪婪搜索解码模块
+# -  与训练好的chatbot进行交互
 #
-# **Acknowledgements**
+# **鸣谢**
 #
-# This tutorial borrows code from the following sources:
+# 本教程借用下列来源的代码:
 #
 # 1) Yuan-Kuei Wu’s pytorch-chatbot implementation:
 #    https://github.com/ywk991112/pytorch-chatbot
@@ -81,14 +71,13 @@
 
 
 ######################################################################
-# Preparations
+# 预备工作
 # ------------
 #
-# To start, Download the data ZIP file
-# `here <https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html>`__
-# and put in a ``data/`` directory under the current directory.
+# 首先，从 `这里 <https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html>`__ 下载数据的ZIP文件，
+# 并将其放在当前目录下的 ``data/`` 目录中。
 #
-# After that, let’s import some necessities.
+# 之后，我们要导入一些必要的包。
 #
 
 from __future__ import absolute_import
@@ -117,27 +106,22 @@ device = torch.device("cuda" if USE_CUDA else "cpu")
 
 
 ######################################################################
-# Load & Preprocess Data
+# 加载 & 预处理数据
 # ----------------------
 #
-# The next step is to reformat our data file and load the data into
-# structures that we can work with.
+# 下一步是重新格式化数据文件，并将数据加载到我们可以使用的结构中。
 #
-# The `Cornell Movie-Dialogs
-# Corpus <https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html>`__
-# is a rich dataset of movie character dialog:
+# `Cornell 电影对话语料库 <https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html>`__
+# 是一个电影人物对话的丰富的数据集。
 #
-# -  220,579 conversational exchanges between 10,292 pairs of movie
-#    characters
-# -  9,035 characters from 617 movies
-# -  304,713 total utterances
+# -  10,292 对电影角色之间的220，579次会话交流
+# -  来自 617 部电影的9,035个人物角色
+# -  304,713 total utterances(话语)
 #
-# This dataset is large and diverse, and there is a great variation of
-# language formality, time periods, sentiment, etc. Our hope is that this
-# diversity makes our model robust to many forms of inputs and queries.
+# 该数据集庞大多样，语言形式、时间周期、情感等都有很大的变化。
+# 我们希望这种多样性使我们的模型对多种形式的输入和查询都有很强的抵抗力。
 #
-# First, we’ll take a look at some lines of our datafile to see the
-# original format.
+# 首先，我们将查看数据文件的一些行，以查看原始格式。
 #
 
 corpus_name = "cornell movie-dialogs corpus"
@@ -153,24 +137,20 @@ printLines(os.path.join(corpus, "movie_lines.txt"))
 
 
 ######################################################################
-# Create formatted data file
+# 创建格式化数据文件
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# For convenience, we'll create a nicely formatted data file in which each line
-# contains a tab-separated *query sentence* and a *response sentence* pair.
+# 为了方便起见，我们将创建一个格式良好的数据文件，其中每一行包含一个tab分隔
+# 的查询语句(*query sentence*)和一个响应语句对(*response sentence*)。
 #
-# The following functions facilitate the parsing of the raw
-# *movie_lines.txt* data file.
+# 以下函数有助于解析原始的 *movie_lines.txt* 数据文件。
 #
-# -  ``loadLines`` splits each line of the file into a dictionary of
-#    fields (lineID, characterID, movieID, character, text)
-# -  ``loadConversations`` groups fields of lines from ``loadLines`` into
-#    conversations based on *movie_conversations.txt*
-# -  ``extractSentencePairs`` extracts pairs of sentences from
-#    conversations
+# -  ``loadLines`` ：将文件的每一行拆分为字段字典(lineID, characterID, movieID, character, text)。
+# -  ``loadConversations`` ：基于 *movie_conversations.txt* 把从 ``loadLines`` 得到的lines的字段分组为回话
+# -  ``extractSentencePairs`` 从会话中抽取句子对
 #
 
-# Splits each line of the file into a dictionary of fields
+# 将文件的每一行拆分为字段字典。
 def loadLines(fileName, fields):
     lines = {}
     with open(fileName, 'r', encoding='iso-8859-1') as f:
@@ -184,7 +164,7 @@ def loadLines(fileName, fields):
     return lines
 
 
-# Groups fields of lines from `loadLines` into conversations based on *movie_conversations.txt*
+# 基于 *movie_conversations.txt* 把从 ``loadLines`` 得到的lines的字段分组为回话
 def loadConversations(fileName, lines, fields):
     conversations = []
     with open(fileName, 'r', encoding='iso-8859-1') as f:
@@ -204,7 +184,7 @@ def loadConversations(fileName, lines, fields):
     return conversations
 
 
-# Extracts pairs of sentences from conversations
+# 从会话中抽取句子对
 def extractSentencePairs(conversations):
     qa_pairs = []
     for conversation in conversations:
@@ -219,66 +199,59 @@ def extractSentencePairs(conversations):
 
 
 ######################################################################
-# Now we’ll call these functions and create the file. We’ll call it
-# *formatted_movie_lines.txt*.
+# 现在我们将调用这些函数并创建文件。我们将其命名为 *formatted_movie_lines.txt* 。
 #
 
-# Define path to new file
+# 定义指向新文件的路径
 datafile = os.path.join(corpus, "formatted_movie_lines.txt")
 
 delimiter = '\t'
 # Unescape the delimiter
 delimiter = str(codecs.decode(delimiter, "unicode_escape"))
 
-# Initialize lines dict, conversations list, and field ids
+# 初始化 lines dict, conversations list, and field ids
 lines = {}
 conversations = []
 MOVIE_LINES_FIELDS = ["lineID", "characterID", "movieID", "character", "text"]
 MOVIE_CONVERSATIONS_FIELDS = ["character1ID", "character2ID", "movieID", "utteranceIDs"]
 
-# Load lines and process conversations
+# 加载 lines 并处理 conversations
 print("\nProcessing corpus...")
 lines = loadLines(os.path.join(corpus, "movie_lines.txt"), MOVIE_LINES_FIELDS)
 print("\nLoading conversations...")
 conversations = loadConversations(os.path.join(corpus, "movie_conversations.txt"),
                                   lines, MOVIE_CONVERSATIONS_FIELDS)
 
-# Write new csv file
+# 写入到新的 csv 文件
 print("\nWriting newly formatted file...")
 with open(datafile, 'w', encoding='utf-8') as outputfile:
     writer = csv.writer(outputfile, delimiter=delimiter, lineterminator='\n')
     for pair in extractSentencePairs(conversations):
         writer.writerow(pair)
 
-# Print a sample of lines
+# 打印输出 lines 的样本
 print("\nSample lines from file:")
 printLines(datafile)
 
 
 ######################################################################
-# Load and trim data
+# 加载 并 裁剪 数据
 # ~~~~~~~~~~~~~~~~~~
 #
-# Our next order of business is to create a vocabulary and load
-# query/response sentence pairs into memory.
+# 我们下一步的工作是创建一个词汇表，并将 查询/响应语句对 加载到内存中。
 #
-# Note that we are dealing with sequences of **words**, which do not have
-# an implicit mapping to a discrete numerical space. Thus, we must create
-# one by mapping each unique word that we encounter in our dataset to an
-# index value.
+# 注意，我们处理的是 **words** 序列，它们没有隐式映射到离散的数值空间。
+# 因此，我们必须通过将我们在DataSet中遇到的每个唯一单词映射到一个索引值来创建一个索引。
 #
-# For this we define a ``Voc`` class, which keeps a mapping from words to
-# indexes, a reverse mapping of indexes to words, a count of each word and
-# a total word count. The class provides methods for adding a word to the
-# vocabulary (``addWord``), adding all words in a sentence
-# (``addSentence``) and trimming infrequently seen words (``trim``). More
-# on trimming later.
+# 为此，我们定义了一个 ``Voc`` 类，它保持从单词到索引的映射、索引到单词的反向映射、每个单词的计数和总单词计数。
+# 该类提供了将单词添加到词汇表(``addWord``)、在句子中添加所有单词(``addSentence``)
+# 和修剪少见单词(``trim``)的方法。稍后更多关于修剪的内容。
 #
 
-# Default word tokens
+# 默认的单词标记(word tokens)
 PAD_token = 0  # Used for padding short sentences
-SOS_token = 1  # Start-of-sentence token
-EOS_token = 2  # End-of-sentence token
+SOS_token = 1  # 句子起始的 token
+EOS_token = 2  # 句子结束的 token
 
 class Voc:
     def __init__(self, name):
@@ -302,7 +275,7 @@ class Voc:
         else:
             self.word2count[word] += 1
 
-    # Remove words below a certain count threshold
+    # 移除那些出现次数低于某个阈值的单词
     def trim(self, min_count):
         if self.trimmed:
             return
@@ -329,16 +302,12 @@ class Voc:
 
 
 ######################################################################
-# Now we can assemble our vocabulary and query/response sentence pairs.
-# Before we are ready to use this data, we must perform some
-# preprocessing.
+# 现在，我们可以组装我们的词汇表和查询/响应句子对。在准备使用这些数据之前，
+# 我们必须执行一些预处理。
 #
-# First, we must convert the Unicode strings to ASCII using
-# ``unicodeToAscii``. Next, we should convert all letters to lowercase and
-# trim all non-letter characters except for basic punctuation
-# (``normalizeString``). Finally, to aid in training convergence, we will
-# filter out sentences with length greater than the ``MAX_LENGTH``
-# threshold (``filterPairs``).
+# 首先，我们必须使用 ``unicodeToAscii`` 将Unicode字符串转换为ASCII。
+# 接下来，我们应该将所有字母转换为小写，并修剪除基本标点符号(``normalizeString``)以外的所有非字母字符。
+# 最后，为了帮助训练收敛，我们将过滤出长度大于 ``MAX_LENGTH`` 阈值的句子(``filterPairs``)。
 #
 
 MAX_LENGTH = 10  # Maximum sentence length to consider
