@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 r"""
-Advanced: Making Dynamic Decisions and the Bi-LSTM CRF
+高级专题: 做动态决策 和 Bi-LSTM CRF
 ======================================================
 
 Dynamic versus Static Deep Learning Toolkits

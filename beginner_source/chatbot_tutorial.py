@@ -373,19 +373,15 @@ for pair in pairs[:10]:
 
 
 ######################################################################
-# Another tactic that is beneficial to achieving faster convergence during
-# training is trimming rarely used words out of our vocabulary. Decreasing
-# the feature space will also soften the difficulty of the function that
-# the model must learn to approximate. We will do this as a two-step
-# process:
+# 另一种有利于在训练中实现更快收敛的策略是将很少使用的单词从我们的词汇表中删掉。
+# 减少特征数量也会降低模型必须学习近似的函数的难度。我们将采取两步行动：
 #
-# 1) Trim words used under ``MIN_COUNT`` threshold using the ``voc.trim``
-#    function.
+# 1) 使用函数 ``voc.trim`` 裁剪出现次数少于 ``MIN_COUNT`` 阈值的单词。
 #
 # 2) Filter out pairs with trimmed words.
 #
 
-MIN_COUNT = 3    # Minimum word count threshold for trimming
+MIN_COUNT = 3    # 用于修剪的最小单词量阈值
 
 def trimRareWords(voc, pairs, MIN_COUNT):
     # Trim words used under the MIN_COUNT from the voc
@@ -421,56 +417,40 @@ pairs = trimRareWords(voc, pairs, MIN_COUNT)
 
 
 ######################################################################
-# Prepare Data for Models
+# 为模型准备数据
 # -----------------------
 #
-# Although we have put a great deal of effort into preparing and massaging our
-# data into a nice vocabulary object and list of sentence pairs, our models
-# will ultimately expect numerical torch tensors as inputs. One way to
-# prepare the processed data for the models can be found in the `seq2seq
-# translation
-# tutorial <https://pytorch.org/tutorials/intermediate/seq2seq_translation_tutorial.html>`__.
-# In that tutorial, we use a batch size of 1, meaning that all we have to
-# do is convert the words in our sentence pairs to their corresponding
-# indexes from the vocabulary and feed this to the models.
+# 虽然我们已经付出了很大的努力来准备和装饰我们的数据到一个很好的词汇表对象和句子对列表，
+# 我们的模型最终期望的是数值型的torch tensors作为输入。
+# 一种为模型准备处理数据的方法可以在(`seq2seq translation tutorial 
+# <https://pytorch.org/tutorials/intermediate/seq2seq_translation_tutorial.html>`__)中找到。
+# 在该教程中，我们使用的 batch size是1，这意味着我们所要做的就是将句子对中的单词
+# 从词汇表中转换成相应的索引，并将其提供给模型。
+# 
+# 然而，如果您有兴趣加快训练和/或希望利用GPU并行化功能，您将需要训练 mini-batches 。
+# 
+# 使用mini-batches也意味着我们必须注意批次中句子长度的变化。为了在同一批次中容纳不同大小的句子，
+# 我们将把批量输入的张量的shape都变成 *(max_length, batch_size)*，
+# 那些小于 *max_length* 的句子将在 *EOS_Token* 之后进行零填充补全。
 #
-# However, if you’re interested in speeding up training and/or would like
-# to leverage GPU parallelization capabilities, you will need to train
-# with mini-batches.
-#
-# Using mini-batches also means that we must be mindful of the variation
-# of sentence length in our batches. To accomodate sentences of different
-# sizes in the same batch, we will make our batched input tensor of shape
-# *(max_length, batch_size)*, where sentences shorter than the
-# *max_length* are zero padded after an *EOS_token*.
-#
-# If we simply convert our English sentences to tensors by converting
-# words to their indexes(\ ``indexesFromSentence``) and zero-pad, our
-# tensor would have shape *(batch_size, max_length)* and indexing the
-# first dimension would return a full sequence across all time-steps.
-# However, we need to be able to index our batch along time, and across
-# all sequences in the batch. Therefore, we transpose our input batch
-# shape to *(max_length, batch_size)*, so that indexing across the first
-# dimension returns a time step across all sentences in the batch. We
-# handle this transpose implicitly in the ``zeroPadding`` function.
-#
+# 如果我们简单地 通过把单词转换为索引(\ ``indexesFromSentence``) 和zero-pad 将我们的英语句子转换为张量，
+# 那么我们的张量的shape为 *(batch_size, max_length)* ，索引第一个维度将返回在所有时间步中的一个完整序列。
+# 然而，我们需要能够沿着时间索引我们的batch，并跨越batch中的所有序列。因此，我们将输入batch的shape转换
+# 为 *(max_length, batch_size)* ，以便跨第一维索引返回batch中所有句子的时间步长。
+# 我们在 ``zeroPadding`` 函数中隐式地处理这个转置。
+# 
 # .. figure:: /_static/img/chatbot/seq2seq_batches.png
 #    :align: center
 #    :alt: batches
 #
-# The ``inputVar`` function handles the process of converting sentences to
-# tensor, ultimately creating a correctly shaped zero-padded tensor. It
-# also returns a tensor of ``lengths`` for each of the sequences in the
-# batch which will be passed to our decoder later.
+# ``inputVar`` 函数处理句子转换为张量的过程，最终创建一个形状正确的零填充张量。
+# 它还返回batch中每个序列的 ``lengths`` 的张量，稍后将传递给我们的解码器。
 #
-# The ``outputVar`` function performs a similar function to ``inputVar``,
-# but instead of returning a ``lengths`` tensor, it returns a binary mask
-# tensor and a maximum target sentence length. The binary mask tensor has
-# the same shape as the output target tensor, but every element that is a
-# *PAD_token* is 0 and all others are 1.
+# ``outputVar`` 函数与 ``inputVar`` 函数执行相似的功能, 但是它返回的不是 ``lengths`` 张量，而是
+# 二值掩模张量(binary mask tensor) 和 最大目标句子长度(maximum target sentence length)。
+# 二值掩模张量的shape与输出目标张量的shape是相同的，但里面每一个元素除了 *PAD_token* 是0之外，其余地方都是1。
 #
-# ``batch2TrainData`` simply takes a bunch of pairs and returns the input
-# and target tensors using the aforementioned functions.
+# ``batch2TrainData`` 简单的接收 a bunch of pairs，并使用上述函数返回输入张量和目标张量。
 #
 
 def indexesFromSentence(voc, sentence):
@@ -534,56 +514,45 @@ print("max_target_len:", max_target_len)
 
 
 ######################################################################
-# Define Models
+# 定义模型
 # -------------
 #
 # Seq2Seq Model
 # ~~~~~~~~~~~~~
 #
-# The brains of our chatbot is a sequence-to-sequence (seq2seq) model. The
-# goal of a seq2seq model is to take a variable-length sequence as an
-# input, and return a variable-length sequence as an output using a
-# fixed-sized model.
+# 我们的聊天机器人的大脑是一个序列到序列(Seq2seq)模型。seq2seq模型的目标是以可变长度序列作为输入，
+# 使用固定大小的模型(fixed-sized model)返回可变长度序列作为输出。
 #
-# `Sutskever et al. <https://arxiv.org/abs/1409.3215>`__ discovered that
-# by using two separate recurrent neural nets together, we can accomplish
-# this task. One RNN acts as an **encoder**, which encodes a variable
-# length input sequence to a fixed-length context vector. In theory, this
-# context vector (the final hidden layer of the RNN) will contain semantic
-# information about the query sentence that is input to the bot. The
-# second RNN is a **decoder**, which takes an input word and the context
-# vector, and returns a guess for the next word in the sequence and a
-# hidden state to use in the next iteration.
+# `Sutskever 等人 <https://arxiv.org/abs/1409.3215>`__ 发现利用两个分开的
+# 递归神经网络(recurrent neural nets)可以完成这一任务。
+# 一个RNN充当编码器(**encoder**)，将可变长度的输入序列编码成一个固定长度的上下文向量。
+# 理论上，这个上下文向量(RNN的最后一个隐藏层)将包含 输入到bot的查询语句 的语义信息。
+# 第二个RNN是解码器(**decoder**)，它接受输入单词和上下文向量，并返回序列中下一个单词的猜测和
+# 下一次迭代使用的隐藏状态。
 #
 # .. figure:: /_static/img/chatbot/seq2seq_ts.png
 #    :align: center
 #    :alt: model
 #
-# Image source:
+# 图片来源:
 # https://jeddy92.github.io/JEddy92.github.io/ts_seq2seq_intro/
 #
 
 
 ######################################################################
-# Encoder
-# ~~~~~~~
+# 编码器(Encoder)
+# ~~~~~~~~~~~~~~~~~
 #
-# The encoder RNN iterates through the input sentence one token
-# (e.g. word) at a time, at each time step outputting an “output” vector
-# and a “hidden state” vector. The hidden state vector is then passed to
-# the next time step, while the output vector is recorded. The encoder
-# transforms the context it saw at each point in the sequence into a set
-# of points in a high-dimensional space, which the decoder will use to
-# generate a meaningful output for the given task.
+# 编码器RNN一次迭代输入句子的一个标记(e.g. word)，在每一时间步输出一个 “output” vector
+# 和 “hidden state” vector。然后将隐藏状态向量传递到下一时间步，同时记录输出向量。
+# 编码器将在序列中的每一点上看到的上下文转换为高维空间中的一组点，
+# 解码器将使用这些点为给定任务生成有意义的输出。
 #
-# At the heart of our encoder is a multi-layered Gated Recurrent Unit,
-# invented by `Cho et al. <https://arxiv.org/pdf/1406.1078v3.pdf>`__ in
-# 2014. We will use a bidirectional variant of the GRU, meaning that there
-# are essentially two independent RNNs: one that is fed the input sequence
-# in normal sequential order, and one that is fed the input sequence in
-# reverse order. The outputs of each network are summed at each time step.
-# Using a bidirectional GRU will give us the advantage of encoding both
-# past and future context.
+# 我们编码器的核心是一个由 `CHO 等人 <https://arxiv.org/pdf/1406.1078v3.pdf>`__ 
+# 2014年发明的多层的门控递归单元(multi-layered Gated Recurrent Unit)。
+# 我们将使用GRU的双向变体(bidirectional variant)，
+# 这意味着本质上有两个独立的RNN：一个以正常顺序输入序列，另一个以反向顺序输入序列。
+# 每个网络的输出在每个时间步被求和。使用双向GRU将为我们提供编码过去上下文和未来上下文的优势。
 #
 # Bidirectional RNN:
 #
@@ -592,43 +561,35 @@ print("max_target_len:", max_target_len)
 #    :align: center
 #    :alt: rnn_bidir
 #
-# Image source: http://colah.github.io/posts/2015-09-NN-Types-FP/
+# 图片来源: http://colah.github.io/posts/2015-09-NN-Types-FP/
 #
-# Note that an ``embedding`` layer is used to encode our word indices in
-# an arbitrarily sized feature space. For our models, this layer will map
-# each word to a feature space of size *hidden_size*. When trained, these
-# values should encode semantic similarity between similar meaning words.
+# 注意，嵌入层(``embedding`` layer)用于在任意大小的特征空间中编码我们的单词索引。对于我们的模型，
+# 这个层将把每个单词映射到一个大小为 *hidden_size* 的特征空间。
+# 在训练时，这些值应该编码同义词之间的语义相似性(semantic similarity)。
 #
-# Finally, if passing a padded batch of sequences to an RNN module, we
-# must pack and unpack padding around the RNN pass using
-# ``torch.nn.utils.rnn.pack_padded_sequence`` and
-# ``torch.nn.utils.rnn.pad_packed_sequence`` respectively.
+# 最后，如果将一批填充好的序列传递给RNN module，则必须使用 
+# ``torch.nn.utils.rnn.pack_padded_sequence`` 和 ``torch.nn.utils.rnn.pad_packed_sequence`` 
+# 分别对RNN传递周围的填充进行打包(pack)和解压(unpack)。
 #
-# **Computation Graph:**
+# **计算图:**
 #
-#    1) Convert word indexes to embeddings.
-#    2) Pack padded batch of sequences for RNN module.
-#    3) Forward pass through GRU.
-#    4) Unpack padding.
-#    5) Sum bidirectional GRU outputs.
-#    6) Return output and final hidden state.
+#    1) 将单词索引转换为嵌入(Convert word indexes to embeddings)。
+#    2) 为 RNN module 打包填充好的批量序列
+#    3) 前向传递使其通过GRU.
+#    4) 去除填充值(Unpack padding).
+#    5) 把双向GRU的输出加起来
+#    6) 返回输出和最后的隐藏层
 #
-# **Inputs:**
+# **输入:**
 #
-# -  ``input_seq``: batch of input sentences; shape=\ *(max_length,
-#    batch_size)*
-# -  ``input_lengths``: list of sentence lengths corresponding to each
-#    sentence in the batch; shape=\ *(batch_size)*
-# -  ``hidden``: hidden state; shape=\ *(n_layers x num_directions,
-#    batch_size, hidden_size)*
+# -  ``input_seq``: 输入序列的batch; shape=\ *(max_length, batch_size)*
+# -  ``input_lengths``: 对应于batch中的每一个句子的序列长度的列表; shape=\ *(batch_size)*
+# -  ``hidden``: 隐藏状态; shape=\ *(n_layers x num_directions, batch_size, hidden_size)*
 #
-# **Outputs:**
+# **输出:**
 #
-# -  ``outputs``: output features from the last hidden layer of the GRU
-#    (sum of bidirectional outputs); shape=\ *(max_length, batch_size,
-#    hidden_size)*
-# -  ``hidden``: updated hidden state from GRU; shape=\ *(n_layers x
-#    num_directions, batch_size, hidden_size)*
+# -  ``outputs``: GRU的最后一个隐藏层的输出特征(双向输出之和); shape=\ *(max_length, batch_size, hidden_size)*
+# -  ``hidden``: 从GRU更新的隐藏状态; shape=\ *(n_layers x num_directions, batch_size, hidden_size)*
 #
 #
 
@@ -660,62 +621,46 @@ class EncoderRNN(nn.Module):
 
 
 ######################################################################
-# Decoder
-# ~~~~~~~
+# 解码器(Decoder)
+# ~~~~~~~~~~~~~~~~~~~~
 #
-# The decoder RNN generates the response sentence in a token-by-token
-# fashion. It uses the encoder’s context vectors, and internal hidden
-# states to generate the next word in the sequence. It continues
-# generating words until it outputs an *EOS_token*, representing the end
-# of the sentence. A common problem with a vanilla seq2seq decoder is that
-# if we rely soley on the context vector to encode the entire input
-# sequence’s meaning, it is likely that we will have information loss.
-# This is especially the case when dealing with long input sequences,
-# greatly limiting the capability of our decoder.
+# 解码器RNN以令牌接令牌(token-by-token)的方式生成响应语句(reponse sentance)。
+# 它使用编码器的上下文向量和内部隐藏状态来生成序列中的下一个单词。
+# 它连续生成单词，直到输出 *EOS_token* ，表示句子的结尾。
+# 一个普通的seq2seq解码器的一个常见问题是：
+# 如果我们依靠上下文向量来编码整个输入序列的意义，我们很可能会有信息丢失。
+# 尤其是在处理长输入序列时，大大限制了解码器的性能。
+# 
+# 与此作斗争，`Bahdanau et al. <https://arxiv.org/abs/1409.0473>`__ 
+# 创建了一个“注意机制(attention mechanism)”，
+# 允许解码器注意输入序列的某些部分，而不是在每一步都使用整个固定的上下文。
 #
-# To combat this, `Bahdanau et al. <https://arxiv.org/abs/1409.0473>`__
-# created an “attention mechanism” that allows the decoder to pay
-# attention to certain parts of the input sequence, rather than using the
-# entire fixed context at every step.
-#
-# At a high level, attention is calculated using the decoder’s current
-# hidden state and the encoder’s outputs. The output attention weights
-# have the same shape as the input sequence, allowing us to multiply them
-# by the encoder outputs, giving us a weighted sum which indicates the
-# parts of encoder output to pay attention to. `Sean
-# Robertson’s <https://github.com/spro>`__ figure describes this very
-# well:
+# 在较高的层次上，注意力是利用解码器的当前隐藏状态和编码器的输出来计算的。
+# 输出注意权重(output attention weights)与输入序列具有相同的shape，
+# 可以将它们与编码器输出相乘，给出一个加权和，表示编码器输出中需要注意的部分。
+# `Sean Robertson’s <https://github.com/spro>`__  的图片很好地描述了这一点:
 #
 # .. figure:: /_static/img/chatbot/attn2.png
 #    :align: center
 #    :alt: attn2
 #
-# `Luong et al. <https://arxiv.org/abs/1508.04025>`__ improved upon
-# Bahdanau et al.’s groundwork by creating “Global attention”. The key
-# difference is that with “Global attention”, we consider all of the
-# encoder’s hidden states, as opposed to Bahdanau et al.’s “Local
-# attention”, which only considers the encoder’s hidden state from the
-# current time step. Another difference is that with “Global attention”,
-# we calculate attention weights, or energies, using the hidden state of
-# the decoder from the current time step only. Bahdanau et al.’s attention
-# calculation requires knowledge of the decoder’s state from the previous
-# time step. Also, Luong et al. provides various methods to calculate the
-# attention energies between the encoder output and decoder output which
-# are called “score functions”:
+# `Luong et al. <https://arxiv.org/abs/1508.04025>`__ 通过创造“全局注意(Global attention)” 在Bahdanau等人的基础上加以改进。
+# 关键的区别在于，对于“全局注意”，我们考虑编码器的所有隐藏状态，
+# 而不是Bahdanau等人的“局部注意”，后者只考虑编码器的当前时间步的隐藏状态。
+# 另一个不同之处在于，对于“全局注意”，我们只从当前的时间步中使用解码器的隐藏状态来计算注意力权重或能量。
+# Bahdanau等人的注意力计算需要从前一时间步了解解码器的状态。另外，Luong等人提供各种方法来计算编码器输出
+# 和解码器输出之间的注意力能量，称为 “score functions” :
 #
 # .. figure:: /_static/img/chatbot/scores.png
 #    :width: 60%
 #    :align: center
 #    :alt: scores
 #
-# where :math:`h_t` = current target decoder state and :math:`\bar{h}_s` =
-# all encoder states.
+# 其中 :math:`h_t` = current target decoder state 和 :math:`\bar{h}_s` = all encoder states.
 #
-# Overall, the Global attention mechanism can be summarized by the
-# following figure. Note that we will implement the “Attention Layer” as a
-# separate ``nn.Module`` called ``Attn``. The output of this module is a
-# softmax normalized weights tensor of shape *(batch_size, 1,
-# max_length)*.
+# 总体而言, 全局注意机制可以由下面的这个图来说明。注意到我们将实现 “Attention Layer” 
+# 作为单独分开的 ``nn.Module`` ，称之为 ``Attn`` 。该module的输出是一个shape为 
+# *(batch_size, 1, max_length)* 的 softmax normalized weights tensor。
 #
 # .. figure:: /_static/img/chatbot/global_attn.png
 #    :align: center
@@ -765,37 +710,31 @@ class Attn(torch.nn.Module):
 
 
 ######################################################################
-# Now that we have defined our attention submodule, we can implement the
-# actual decoder model. For the decoder, we will manually feed our batch
-# one time step at a time. This means that our embedded word tensor and
-# GRU output will both have shape *(1, batch_size, hidden_size)*.
+# 现在我们已经定义了我们的注意子模块(attention submodule)，我们可以实现实际的解码器模型。
+# 对于解码器，我们将一次一个时间步手动输入我们的batch。这意味着我们嵌入的单词张量和GRU输出都将具有
+# shape 为 *(1, batch_size, hidden_size)* 。
 #
-# **Computation Graph:**
+# **计算图:**
 #
-#    1) Get embedding of current input word.
-#    2) Forward through unidirectional GRU.
-#    3) Calculate attention weights from the current GRU output from (2).
-#    4) Multiply attention weights to encoder outputs to get new "weighted sum" context vector.
-#    5) Concatenate weighted context vector and GRU output using Luong eq. 5.
-#    6) Predict next word using Luong eq. 6 (without softmax).
-#    7) Return output and final hidden state.
+#    1) 获取当前输入单词的嵌入(embedding)
+#    2) 前向传递通过双向GRU.
+#    3) 从上面第(2)步的当前GRU的输出 计算注意力权重.
+#    4) 把注意力权重乘到编码器输出上来获得新的"加权和"上下文向量.
+#    5) 使用 Luong eq. 5 串接(Concatenate)加权上下文向量和GRU输出。
+#    6) 使用 Luong eq. 6 预测下一个单词(没有 softmax).
+#    7) 返回输出和最终的隐藏状态.
 #
-# **Inputs:**
+# **输入:**
 #
-# -  ``input_step``: one time step (one word) of input sequence batch;
-#    shape=\ *(1, batch_size)*
-# -  ``last_hidden``: final hidden layer of GRU; shape=\ *(n_layers x
-#    num_directions, batch_size, hidden_size)*
-# -  ``encoder_outputs``: encoder model’s output; shape=\ *(max_length,
-#    batch_size, hidden_size)*
+# -  ``input_step``: one time step (one word) of input sequence batch; shape=\ *(1, batch_size)*
+# -  ``last_hidden``: GRU的最终隐藏层; shape=\ *(n_layers x num_directions, batch_size, hidden_size)*
+# -  ``encoder_outputs``: 编码器的输出; shape=\ *(max_length, batch_size, hidden_size)*
 #
-# **Outputs:**
+# **输出:**
 #
-# -  ``output``: softmax normalized tensor giving probabilities of each
-#    word being the correct next word in the decoded sequence;
+# -  ``output``: 给定 解码得到的序列中的每个单词是正确的下一个单词的概率 下 的 softmax normalized tensor ;
 #    shape=\ *(batch_size, voc.num_words)*
-# -  ``hidden``: final hidden state of GRU; shape=\ *(n_layers x
-#    num_directions, batch_size, hidden_size)*
+# -  ``hidden``: GRU的最终隐藏状态; shape=\ *(n_layers x num_directions, batch_size, hidden_size)*
 #
 
 class LuongAttnDecoderRNN(nn.Module):
@@ -842,19 +781,15 @@ class LuongAttnDecoderRNN(nn.Module):
 
 
 ######################################################################
-# Define Training Procedure
+# 定义训练步骤
 # -------------------------
 #
-# Masked loss
-# ~~~~~~~~~~~
+# 掩模损失(Masked loss)
+# ~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# Since we are dealing with batches of padded sequences, we cannot simply
-# consider all elements of the tensor when calculating loss. We define
-# ``maskNLLLoss`` to calculate our loss based on our decoder’s output
-# tensor, the target tensor, and a binary mask tensor describing the
-# padding of the target tensor. This loss function calculates the average
-# negative log likelihood of the elements that correspond to a *1* in the
-# mask tensor.
+# 由于我们处理的是一个批次的填充序列(padded sequences)，所以在计算损失时不能简单地考虑张量的所有元素。
+# 根据解码器输出张量、目标张量和描述目标张量填充的二值掩模张量(binary mask tensor)，
+# 定义了 ``maskNLLLoss`` 来计算我们的损失。此损失函数计算与掩模张量中的 *1* 对应的元素的平均负对数似然(average negative log likelihood)。
 #
 
 def maskNLLLoss(inp, target, mask):
@@ -866,63 +801,49 @@ def maskNLLLoss(inp, target, mask):
 
 
 ######################################################################
-# Single training iteration
+# 单个训练迭代
 # ~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# The ``train`` function contains the algorithm for a single training
-# iteration (a single batch of inputs).
+# ``train`` 函数包含单个训练迭代(单个输入批次)的算法。
 #
-# We will use a couple of clever tricks to aid in convergence:
+# 我们将使用一些巧妙的技巧来帮助收敛:
 #
-# -  The first trick is using **teacher forcing**. This means that at some
-#    probability, set by ``teacher_forcing_ratio``, we use the current
-#    target word as the decoder’s next input rather than using the
-#    decoder’s current guess. This technique acts as training wheels for
-#    the decoder, aiding in more efficient training. However, teacher
-#    forcing can lead to model instability during inference, as the
-#    decoder may not have a sufficient chance to truly craft its own
-#    output sequences during training. Thus, we must be mindful of how we
-#    are setting the ``teacher_forcing_ratio``, and not be fooled by fast
-#    convergence.
+# -  第一个诀窍是利用老师的强迫(**teacher forcing**)。这意味着，在一定的概率下，根据 ``teacher_forcing_ratio`` 设置，
+#    我们使用当前目标词作为解码器的下一个输入，而不是使用解码器当前的猜测。
+#    这种技术作为解码器的 training wheels，有助于更有效的训练。
+#    然而，在推理过程中，教师的强迫会导致模型的不稳定性，
+#    因为在训练过程中，解码器可能没有足够的机会真正地完成自己的输出序列。
+#    因此，我们必须注意如何设置 ``teacher_forcing_ratio`` ，而不是被快速收敛所愚弄。
 #
-# -  The second trick that we implement is **gradient clipping**. This is
-#    a commonly used technique for countering the “exploding gradient”
-#    problem. In essence, by clipping or thresholding gradients to a
-#    maximum value, we prevent the gradients from growing exponentially
-#    and either overflow (NaN), or overshoot steep cliffs in the cost
-#    function.
+# -  我们实现的第二个技巧是梯度裁剪 **(gradient clipping)** 。这是对付“爆炸梯度(exploding gradient)”问题的一种常用技术。
+#    从本质上说，通过将梯度裁剪或阈值化到一个最大值，我们可以防止梯度指数增长， 或者在代价函数中溢出(NaN)或过陡的悬崖。
 #
 # .. figure:: /_static/img/chatbot/grad_clip.png
 #    :align: center
 #    :width: 60%
 #    :alt: grad_clip
 #
-# Image source: Goodfellow et al. *Deep Learning*. 2016. http://www.deeplearningbook.org/
+# 图片来源: Goodfellow et al. *Deep Learning*. 2016. http://www.deeplearningbook.org/
 #
 # **Sequence of Operations:**
 #
-#    1) Forward pass entire input batch through encoder.
-#    2) Initialize decoder inputs as SOS_token, and hidden state as the encoder's final hidden state.
-#    3) Forward input batch sequence through decoder one time step at a time.
-#    4) If teacher forcing: set next decoder input as the current target; else: set next decoder input as current decoder output.
-#    5) Calculate and accumulate loss.
-#    6) Perform backpropagation.
-#    7) Clip gradients.
-#    8) Update encoder and decoder model parameters.
+#    1) 把整个输入批次前向传递使其通过编码器.
+#    2) 以 SOS_token 初始化解码器输入, 和 以编码器的最终隐藏状态初始化 hidden state .
+#    3) 一次一个时间步 前向传递输入批次序列 使其通过解码器.
+#    4) 如果使用教师强迫: 把当前状态设置为下一个解码器输入; 如果不用: 把当前解码器的输出设置为下一个解码器输入.
+#    5) 计算并积累损失.
+#    6) 执行向后传播.
+#    7) 裁剪梯度.
+#    8) 更新编码器和解码器的模型参数.
 #
 #
 # .. Note ::
 #
-#   PyTorch’s RNN modules (``RNN``, ``LSTM``, ``GRU``) can be used like any
-#   other non-recurrent layers by simply passing them the entire input
-#   sequence (or batch of sequences). We use the ``GRU`` layer like this in
-#   the ``encoder``. The reality is that under the hood, there is an
-#   iterative process looping over each time step calculating hidden states.
-#   Alternatively, you ran run these modules one time-step at a time. In
-#   this case, we manually loop over the sequences during the training
-#   process like we must do for the ``decoder`` model. As long as you
-#   maintain the correct conceptual model of these modules, implementing
-#   sequential models can be very straightforward.
+#   PyTorch的RNN modules(``RNN``, ``LSTM``, ``GRU``)可以像其他非递归层(non-recurrent layers)一样使用，
+#   只需将整个输入序列(或批处理序列)传递给它们。
+#   我们在 ``encoder`` 中就是这样使用 ``GRU`` 层的。实际情况是，在底层有一个迭代过程在每个时间步上循环计算隐藏状态。
+#   或者，您可以一次一个时间步的运行这些modules。在这种情况下，我们在训练过程中手动循环序列，就像我们必须为 ``decoder`` 模型所做的那样。
+#   只要您维护这些modules的正确概念模型，实现顺序模型就会非常简单。
 #
 #
 
@@ -1001,21 +922,16 @@ def train(input_variable, lengths, target_variable, mask, max_target_len, encode
 
 
 ######################################################################
-# Training iterations
+# 多个训练迭代
 # ~~~~~~~~~~~~~~~~~~~
 #
-# It is finally time to tie the full training procedure together with the
-# data. The ``trainIters`` function is responsible for running
-# ``n_iterations`` of training given the passed models, optimizers, data,
-# etc. This function is quite self explanatory, as we have done the heavy
-# lifting with the ``train`` function.
+# 最后，是时候将整个训练过程与数据结合起来了。给定传递的模型、优化器、数据等，
+# ``trainIters`` 函数负责训练的 ``n_iterations`` 次迭代。
+# 这个函数是相当不言自明的，因为我们已经用 ``train`` 函数做了繁重的工作。
 #
-# One thing to note is that when we save our model, we save a tarball
-# containing the encoder and decoder state_dicts (parameters), the
-# optimizers’ state_dicts, the loss, the iteration, etc. Saving the model
-# in this way will give us the ultimate flexibility with the checkpoint.
-# After loading a checkpoint, we will be able to use the model parameters
-# to run inference, or we can continue training right where we left off.
+# 需要注意的是，当我们保存模型时，我们保存了一个tarball，它包含编码器和解码器的 state_dicts (参数)、
+# 优化器的 state_dicts、损失、迭代等等。以这种方式保存模型将使我们对检查点(checkpoint)具有最终的灵活性。
+# 在加载检查点之后，我们将能够使用模型参数来运行推理，或者我们可以继续在我们停止的地方进行训练。
 #
 
 def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, decoder_optimizer, embedding, encoder_n_layers, decoder_n_layers, save_dir, n_iteration, batch_size, print_every, save_every, clip, corpus_name, loadFilename):
@@ -1067,40 +983,34 @@ def trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, deco
 
 
 ######################################################################
-# Define Evaluation
+# 定义评估
 # -----------------
 #
-# After training a model, we want to be able to talk to the bot ourselves.
-# First, we must define how we want the model to decode the encoded input.
+# 在训练了一个模型之后，我们希望自己能够和机器人交谈。首先，我们必须定义我们希望模型如何解码编码的输入。
 #
-# Greedy decoding
-# ~~~~~~~~~~~~~~~
+# 贪婪解码
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# Greedy decoding is the decoding method that we use during training when
-# we are **NOT** using teacher forcing. In other words, for each time
-# step, we simply choose the word from ``decoder_output`` with the highest
-# softmax value. This decoding method is optimal on a single time-step
-# level.
+# 贪婪解码(Greedy decoding)是我们在 **不** 使用教师强迫(teacher forcing)的情况下，在训练过程中使用的一种解码方法。
+# 换句话说，对于每个时间步，我们只需选择具有最高softmax值的 ``decoder_output`` 中的单词。
+# 这种解码方法在单个时间步水平(single time-step level)上是最优的. 
 #
-# To facilite the greedy decoding operation, we define a
-# ``GreedySearchDecoder`` class. When run, an object of this class takes
-# an input sequence (``input_seq``) of shape *(input_seq length, 1)*, a
-# scalar input length (``input_length``) tensor, and a ``max_length`` to
-# bound the response sentence length. The input sentence is evaluated
-# using the following computational graph:
+# 为了方便贪婪解码操作，我们定义了 ``GreedySearchDecoder`` 类。当运行时，
+# 该类的对象接受shape为 *(input_seq length, 1)* 的输入序列(``input_seq``)、标量输入长度(``input_length``)张量，
+# 以及 ``max_length`` 来限制响应语句的长度。输入句子使用以下计算图进行计算：
 #
-# **Computation Graph:**
+# **计算图:**
 #
-#    1) Forward input through encoder model.
-#    2) Prepare encoder's final hidden layer to be first hidden input to the decoder.
-#    3) Initialize decoder's first input as SOS_token.
-#    4) Initialize tensors to append decoded words to.
-#    5) Iteratively decode one word token at a time:
-#        a) Forward pass through decoder.
-#        b) Obtain most likely word token and its softmax score.
-#        c) Record token and score.
-#        d) Prepare current token to be next decoder input.
-#    6) Return collections of word tokens and scores.
+#    1) 向前传递输入使其通过编码器模型.
+#    2) 准备编码器的最终隐藏层作为解码器第一隐藏层的输入.
+#    3) 初始化解码器的第一个输入为 SOS_token.
+#    4) 初始化要追加到解码出的单词上的张量.
+#    5) 一次迭代解码一个单词标记(word token):
+#        a) 向前传递通过解码器.
+#        b) 获得最有可能的单词标记(word token)和对应的(softmax score).
+#        c) 记录 token 和 score.
+#        d) 准备把当前 token 作为下一个解码器输入.
+#    6) 返回本次迭代过程得到的 word tokens 和 scores 的集合(collections).
 #
 
 class GreedySearchDecoder(nn.Module):
@@ -1135,33 +1045,23 @@ class GreedySearchDecoder(nn.Module):
 
 
 ######################################################################
-# Evaluate my text
+# 评估我的文本
 # ~~~~~~~~~~~~~~~~
 #
-# Now that we have our decoding method defined, we can write functions for
-# evaluating a string input sentence. The ``evaluate`` function manages
-# the low-level process of handling the input sentence. We first format
-# the sentence as an input batch of word indexes with *batch_size==1*. We
-# do this by converting the words of the sentence to their corresponding
-# indexes, and transposing the dimensions to prepare the tensor for our
-# models. We also create a ``lengths`` tensor which contains the length of
-# our input sentence. In this case, ``lengths`` is scalar because we are
-# only evaluating one sentence at a time (batch_size==1). Next, we obtain
-# the decoded response sentence tensor using our ``GreedySearchDecoder``
-# object (``searcher``). Finally, we convert the response’s indexes to
-# words and return the list of decoded words.
+# 现在我们已经定义了解码方法，我们可以编写用于评估(evaluate)字符串输入语句的函数。
+# ``evaluate`` 函数管理处理输入语句的低级过程。我们首先将句子格式化为单词索引的输入batch(其中 *batch_size==1* )。
+# 我们将句子中的单词转换成相应的索引，并调换维度顺序来为我们的模型准备张量。我们还创建了一个 ``lengths`` 张量，
+# 它包含我们输入句子的长度。在这种情况下，``lengths`` 是标量，因为我们一次只计算一个句子(batch_size==1)。
+# 然后，利用 ``GreedySearchDecoder`` 对象(``searcher``)得到解码后的响应语句张量。
+# 最后，我们将响应的索引转换为单词，并返回解码得到的单词列表。
 #
-# ``evaluateInput`` acts as the user interface for our chatbot. When
-# called, an input text field will spawn in which we can enter our query
-# sentence. After typing our input sentence and pressing *Enter*, our text
-# is normalized in the same way as our training data, and is ultimately
-# fed to the ``evaluate`` function to obtain a decoded output sentence. We
-# loop this process, so we can keep chatting with our bot until we enter
-# either “q” or “quit”.
+# ``evaluateInput`` 充当聊天机器人的用户界面。调用时将显示输入文本框，我们可以在其中输入查询语句。
+# 输入句子并按 *Enter* 键后，我们的文本以与训练数据相同的方式归一化，
+# 并最终被输入到 ``evaluate`` 函数中，得到解码后的输出语句。我们循环这个过程，
+# 以便我们可以一直与我们的机器人聊天，直到我们输入“q” 或 “quit”。
 #
-# Finally, if a sentence is entered that contains a word that is not in
-# the vocabulary, we handle this gracefully by printing an error message
-# and prompting the user to enter another sentence.
+# 最后，如果输入的句子中包含一个不在词汇表中的单词，我们将通过打印错误消息并提示
+# 用户输入另一个句子来优雅地处理这个问题。
 #
 
 def evaluate(encoder, decoder, searcher, voc, sentence, max_length=MAX_LENGTH):
@@ -1203,17 +1103,14 @@ def evaluateInput(encoder, decoder, searcher, voc):
 
 
 ######################################################################
-# Run Model
+# 运行模型
 # ---------
 #
-# Finally, it is time to run our model!
+# 最后，是时候运行我们的模型了!
 #
-# Regardless of whether we want to train or test the chatbot model, we
-# must initialize the individual encoder and decoder models. In the
-# following block, we set our desired configurations, choose to start from
-# scratch or set a checkpoint to load from, and build and initialize the
-# models. Feel free to play with different model configurations to
-# optimize performance.
+# 无论我们是要训练还是测试聊天机器人模型，我们都必须初始化单个的编解码模型。
+# 在下面的块中，我们设置了所需的配置，选择从头开始或设置要加载的检查点，
+# 并构建和初始化模型。可以随意使用不同的模型配置来优化性能。
 #
 
 # Configure models
@@ -1267,14 +1164,12 @@ print('Models built and ready to go!')
 
 
 ######################################################################
-# Run Training
+# 运行训练过程
 # ~~~~~~~~~~~~
 #
-# Run the following block if you want to train the model.
+# 如果要训练模型，请运行以下块。
 #
-# First we set training parameters, then we initialize our optimizers, and
-# finally we call the ``trainIters`` function to run our training
-# iterations.
+# 首先我们设置训练参数，然后初始化我们的优化器，最后我们调用 ``trainIters`` 函数来运行我们的训练迭代。
 #
 
 # Configure training/optimization
@@ -1306,10 +1201,10 @@ trainIters(model_name, voc, pairs, encoder, decoder, encoder_optimizer, decoder_
 
 
 ######################################################################
-# Run Evaluation
+# 运行评估过程
 # ~~~~~~~~~~~~~~
 #
-# To chat with your model, run the following block.
+# 若要与模型聊天，请运行以下块。
 #
 
 # Set dropout layers to eval mode
@@ -1324,15 +1219,12 @@ searcher = GreedySearchDecoder(encoder, decoder)
 
 
 ######################################################################
-# Conclusion
+# 总结
 # ----------
 #
-# That’s all for this one, folks. Congratulations, you now know the
-# fundamentals to building a generative chatbot model! If you’re
-# interested, you can try tailoring the chatbot’s behavior by tweaking the
-# model and training parameters and customizing the data that you train
-# the model on.
+# 伙计们，这件事就到此为止了。恭喜你，你现在知道建立一个生成式聊天机器人模型的基本原理了！
+# 如果您感兴趣，您可以尝试裁剪(tailoring)聊天机器人的行为，方法是调整模型和训练参数，
+# 并自定义您训练模型的数据。
 #
-# Check out the other tutorials for more cool deep learning applications
-# in PyTorch!
+# 查看PyTorch中的其他教程，以获得更酷的深度学习应用！
 #

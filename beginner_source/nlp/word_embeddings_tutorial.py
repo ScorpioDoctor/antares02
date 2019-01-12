@@ -1,78 +1,55 @@
 # -*- coding: utf-8 -*-
 r"""
-Word Embeddings: Encoding Lexical Semantics
+单词嵌入: 编码词汇语义
 ===========================================
 
-Word embeddings are dense vectors of real numbers, one per word in your
-vocabulary. In NLP, it is almost always the case that your features are
-words! But how should you represent a word in a computer? You could
-store its ascii character representation, but that only tells you what
-the word *is*, it doesn't say much about what it *means* (you might be
-able to derive its part of speech from its affixes, or properties from
-its capitalization, but not much). Even more, in what sense could you
-combine these representations? We often want dense outputs from our
-neural networks, where the inputs are :math:`|V|` dimensional, where
-:math:`V` is our vocabulary, but often the outputs are only a few
-dimensional (if we are only predicting a handful of labels, for
-instance). How do we get from a massive dimensional space to a smaller
-dimensional space?
+单词嵌入(Word embeddings)是实数的密集向量，在你的词汇表中每个单词都会有一个整数对应。
+在NLP中，特征几乎总是单词(word)！但是，你应该如何在计算机中表示一个单词呢？
+您可以存储它的ascii字符表示，但这只告诉您单词是什么，它并不能说明它的含义。
+更重要的是，你可以在什么意义上组合这些表示？我们经常希望从我们的神经网络中得到密集的输出，
+其中输入是 :math:`|V|` 维的，其中 :math:`V` 是我们的词汇表，但是通常输出只有几维
+(例如，如果我们只是预测几个标签的话)。我们如何从一个大的空间到一个较小的空间？
 
-How about instead of ascii representations, we use a one-hot encoding?
-That is, we represent the word :math:`w` by
+如果我们不使用 ascii representations, 而是使用 one-hot encoding 呢?
+就是说, 我们表达单词 :math:`w` ， 通过
 
 .. math::  \overbrace{\left[ 0, 0, \dots, 1, \dots, 0, 0 \right]}^\text{|V| elements}
 
-where the 1 is in a location unique to :math:`w`. Any other word will
-have a 1 in some other location, and a 0 everywhere else.
+其中 1 是一个惟一对应于 :math:`w` 的位置。 任何其他的word将会在其他的某个位置有 1 或者 0 。
 
-There is an enormous drawback to this representation, besides just how
-huge it is. It basically treats all words as independent entities with
-no relation to each other. What we really want is some notion of
-*similarity* between words. Why? Let's see an example.
+这个表示法除了非常巨大这个明显的缺点之外还有一个巨大的缺点。它基本上把所有的词当作独立的实体，没有任何关系。
+我们真正想要的是词语之间相似(*similarity*)的概念。为什么？让我们看看一个例子。
 
-Suppose we are building a language model. Suppose we have seen the
-sentences
+假设我们正在构建一个语言模型(language model)。假设我们在训练数据中看过这些句子：
 
 * The mathematician ran to the store.
 * The physicist ran to the store.
 * The mathematician solved the open problem.
 
-in our training data. Now suppose we get a new sentence never before
-seen in our training data:
+现在，假设我们得到了一个新的句子，这在我们的训练数据中是前所未见的：
 
 * The physicist solved the open problem.
 
-Our language model might do OK on this sentence, but wouldn't it be much
-better if we could use the following two facts:
+我们的语言模型在这句话上可能做得不错，但如果我们可以使用以下两个事实，难道不是更好吗：
 
-* We have seen  mathematician and physicist in the same role in a sentence. Somehow they
-  have a semantic relation.
-* We have seen mathematician in the same role  in this new unseen sentence
-  as we are now seeing physicist.
+* 我们看到数学家和物理学家在句子中扮演着同样的角色。或多或少的，他们有一个语义关系( semantic relation)。
+* 我们看到数学家在这个新的没见过的句子中扮演着和我们现在看到的物理学家相同的角色。
 
-and then infer that physicist is actually a good fit in the new unseen
-sentence? This is what we mean by a notion of similarity: we mean
-*semantic similarity*, not simply having similar orthographic
-representations. It is a technique to combat the sparsity of linguistic
-data, by connecting the dots between what we have seen and what we
-haven't. This example of course relies on a fundamental linguistic
-assumption: that words appearing in similar contexts are related to each
-other semantically. This is called the `distributional
-hypothesis <https://en.wikipedia.org/wiki/Distributional_semantics>`__.
+然后推断物理学家在这个新的看不见的句子中是个很好的人选？这就是我们所说的相似的概念：
+我们指的是语义相似性(*semantic similarity*)，而不仅仅是具有相似的表示法。这是一种与语言数据的稀疏性作斗争的技术，
+它将我们所看到的和我们所没有的东西联系起来。这个例子当然依赖于一个基本的语言学假设：
+在相似的语境中出现的词在语义上是相互关联的。这就是所谓的分布假说
+( `distributional hypothesis <https://en.wikipedia.org/wiki/Distributional_semantics>`__)。
 
 
-Getting Dense Word Embeddings
+获得密集词嵌入
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-How can we solve this problem? That is, how could we actually encode
-semantic similarity in words? Maybe we think up some semantic
-attributes. For example, we see that both mathematicians and physicists
-can run, so maybe we give these words a high score for the "is able to
-run" semantic attribute. Think of some other attributes, and imagine
-what you might score some common words on those attributes.
+我们如何解决这个问题呢？也就是说，我们怎样才能在词中编码语义相似性呢？也许我们想出了一些语义属性。
+例如，我们看到数学家和物理学家都能运行，所以也许我们给这些词一个高分，因为“is able to run”语义属性。
+想想其他一些属性，想象一下你可能会在这些属性上得到一些共同的词汇。
 
-If each attribute is a dimension, then we might give each word a vector,
-like this:
+如果每个属性都是一个维度，那么我们可以给每个单词一个向量，如下所示：
 
 .. math::
 
@@ -84,75 +61,47 @@ like this:
     q_\text{physicist} = \left[ \overbrace{2.5}^\text{can run},
    \overbrace{9.1}^\text{likes coffee}, \overbrace{6.4}^\text{majored in Physics}, \dots \right]
 
-Then we can get a measure of similarity between these words by doing:
+然后，我们可以通过这样做来衡量这些词之间的相似性：
 
 .. math::  \text{Similarity}(\text{physicist}, \text{mathematician}) = q_\text{physicist} \cdot q_\text{mathematician}
 
-Although it is more common to normalize by the lengths:
+虽然用长度来规范是比较常见的:
 
 .. math::
 
     \text{Similarity}(\text{physicist}, \text{mathematician}) = \frac{q_\text{physicist} \cdot q_\text{mathematician}}
    {\| q_\text{\physicist} \| \| q_\text{mathematician} \|} = \cos (\phi)
 
-Where :math:`\phi` is the angle between the two vectors. That way,
-extremely similar words (words whose embeddings point in the same
-direction) will have similarity 1. Extremely dissimilar words should
-have similarity -1.
+其中 :math:`\phi` 是两个向量之间的角度。这样，非常相似的单词(嵌入指向相同方向的单词)将具有相似性 1。非常不同的词应该有相似度 -1 。
+
+你可以把本节一开始讲到的稀疏的one-hot vectors看作是我们定义的这些新向量的一个特例，其中每个单词基本上都有相似度0，
+我们给每个单词一些独特的语义属性。这些新的向量是密集的(*dense*)，也就是说，它们的条目通常是非零的.
+
+但是，这些新的向量是一个很大的痛苦：你可以想出成千上万种不同的语义属性，这些属性可能与确定相似性有关，
+你到底会如何设置不同属性的值呢？深度学习的核心思想是，由神经网络学习特征的表示，而不是要求程序员自己设计它们。
+那么，为什么不让单词嵌入(word embedding)成为我们模型中的参数，然后在训练期间进行更新呢？这正是我们要做的。
+我们将有一些潜在的语义属性(*latent semantic attributes*)，原则上网络可以学习。注意，嵌入(embeddings)这个词可能是不可解释的。
+也就是说，尽管上面我们手工制作的向量，我们可以看到数学家和物理学家的相似之处在于他们都喜欢咖啡，
+如果我们允许一个神经网络来学习嵌入，并且看到数学家和物理学家在第二维度中都有很大的值，
+我们还不清楚这意味着什么。它们在某些潜在的语义维度上是相似的，但这对我们可能没有解释性。
+
+总结一下, **词嵌入(word embeddings)是一个单词的语义的一种表示，
+高效的编码了可能与手头的任务相关的语义信息**。 你也可以嵌入其他一些东西：
+部分语音标记, 解析树, or 任何东西! 特征嵌入的思想是以具体领域为中心的。
 
 
-You can think of the sparse one-hot vectors from the beginning of this
-section as a special case of these new vectors we have defined, where
-each word basically has similarity 0, and we gave each word some unique
-semantic attribute. These new vectors are *dense*, which is to say their
-entries are (typically) non-zero.
-
-But these new vectors are a big pain: you could think of thousands of
-different semantic attributes that might be relevant to determining
-similarity, and how on earth would you set the values of the different
-attributes? Central to the idea of deep learning is that the neural
-network learns representations of the features, rather than requiring
-the programmer to design them herself. So why not just let the word
-embeddings be parameters in our model, and then be updated during
-training? This is exactly what we will do. We will have some *latent
-semantic attributes* that the network can, in principle, learn. Note
-that the word embeddings will probably not be interpretable. That is,
-although with our hand-crafted vectors above we can see that
-mathematicians and physicists are similar in that they both like coffee,
-if we allow a neural network to learn the embeddings and see that both
-mathematicians and physicists have a large value in the second
-dimension, it is not clear what that means. They are similar in some
-latent semantic dimension, but this probably has no interpretation to
-us.
-
-
-In summary, **word embeddings are a representation of the *semantics* of
-a word, efficiently encoding semantic information that might be relevant
-to the task at hand**. You can embed other things too: part of speech
-tags, parse trees, anything! The idea of feature embeddings is central
-to the field.
-
-
-Word Embeddings in Pytorch
+Pytorch 中的词嵌入
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Before we get to a worked example and an exercise, a few quick notes
-about how to use embeddings in Pytorch and in deep learning programming
-in general. Similar to how we defined a unique index for each word when
-making one-hot vectors, we also need to define an index for each word
-when using embeddings. These will be keys into a lookup table. That is,
-embeddings are stored as a :math:`|V| \times D` matrix, where :math:`D`
-is the dimensionality of the embeddings, such that the word assigned
-index :math:`i` has its embedding stored in the :math:`i`'th row of the
-matrix. In all of my code, the mapping from words to indices is a
-dictionary named word\_to\_ix.
+在我们开始一个有效的示例和练习之前，先简单介绍一下如何在Pytorch和一般的深度学习编程中使用嵌入(embeddings)。
+就像我们在生成one-hot向量时为每个单词定义唯一索引一样，我们也需要在使用嵌入(embeddings)时为每个单词定义一个索引。
+这些将是查找表的键(keys into a lookup table)。也就是说，嵌入被存储为一个 :math:`|V| \times D` 矩阵，
+其中 :math:`D` 是嵌入的维数，使得具有索引 :math:`i` 的单词的嵌入被存储在矩阵的第 :math:`i` 行中。
+在我的所有代码中，从单词到索引的映射是一个名为 word\_to\_ix 的字典。
 
-The module that allows you to use embeddings is torch.nn.Embedding,
-which takes two arguments: the vocabulary size, and the dimensionality
-of the embeddings.
+允许您使用嵌入的module是 torch.nn.Embedding ，它包含两个参数：词汇表的大小和嵌入的维度。
 
-To index into this table, you must use torch.LongTensor (since the
-indices are integers, not floats).
+要想在这个表中进行索引, 你必须适应 torch.LongTensor (因为索引是 integers, 而不是 floats).
 
 """
 
@@ -175,18 +124,16 @@ print(hello_embed)
 
 
 ######################################################################
-# An Example: N-Gram Language Modeling
+# 一个示例: N-Gram 语言模型
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# Recall that in an n-gram language model, given a sequence of words
-# :math:`w`, we want to compute
+# 回想一下，在n-gram语言模型中，给定一单词序列 :math:`w` ，我们想要计算
 #
 # .. math::  P(w_i | w_{i-1}, w_{i-2}, \dots, w_{i-n+1} )
 #
-# Where :math:`w_i` is the ith word of the sequence.
+# 其中 :math:`w_i` 是序列的第 i 个单词。
 #
-# In this example, we will compute the loss function on some training
-# examples and update the parameters with backpropagation.
+# 在这个例子中, 我们将在一些训练样本上计算损失函数，并且使用反向传播(backpropagation)更新参数.
 #
 
 CONTEXT_SIZE = 2
@@ -242,62 +189,53 @@ for epoch in range(10):
     total_loss = 0
     for context, target in trigrams:
 
-        # Step 1. Prepare the inputs to be passed to the model (i.e, turn the words
-        # into integer indices and wrap them in tensors)
+        # Step 1. 准备要传递给模型的输入 (i.e, 把这些单词转化为整数索引并且封装在张量中)
         context_idxs = torch.tensor([word_to_ix[w] for w in context], dtype=torch.long)
 
-        # Step 2. Recall that torch *accumulates* gradients. Before passing in a
-        # new instance, you need to zero out the gradients from the old
-        # instance
+        # Step 2. 回想一下torch会 *累积* 梯度。 在传入一个新的样例之前，
+        # 应该把之前那个样例产生的梯度清零
         model.zero_grad()
 
-        # Step 3. Run the forward pass, getting log probabilities over next
-        # words
+        # Step 3. 运行前向传递过程, 得到下一个单词的对数概率
         log_probs = model(context_idxs)
 
-        # Step 4. Compute your loss function. (Again, Torch wants the target
-        # word wrapped in a tensor)
+        # Step 4. 计算损失函数. (进一步, Torch 想要 目标单词封装在一个tensor中)
         loss = loss_function(log_probs, torch.tensor([word_to_ix[target]], dtype=torch.long))
 
-        # Step 5. Do the backward pass and update the gradient
+        # Step 5. 执行反向传递并更新梯度
         loss.backward()
         optimizer.step()
 
-        # Get the Python number from a 1-element Tensor by calling tensor.item()
+        # 通过调用 tensor.item() 得到单元素张量中的Python数字
         total_loss += loss.item()
     losses.append(total_loss)
-print(losses)  # The loss decreased every iteration over the training data!
+print(losses)  # 在训练数据上每一次迭代损失都会下降!
 
 
 ######################################################################
-# Exercise: Computing Word Embeddings: Continuous Bag-of-Words
+# 练习: 计算词嵌入: 连续词袋
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# The Continuous Bag-of-Words model (CBOW) is frequently used in NLP deep
-# learning. It is a model that tries to predict words given the context of
-# a few words before and a few words after the target word. This is
-# distinct from language modeling, since CBOW is not sequential and does
-# not have to be probabilistic. Typcially, CBOW is used to quickly train
-# word embeddings, and these embeddings are used to initialize the
-# embeddings of some more complicated model. Usually, this is referred to
-# as *pretraining embeddings*. It almost always helps performance a couple
-# of percent.
+# 连续词袋模型(CBOW)是NLP深度学习中常用的一种模式.它是一种模型，
+# 它试图预测给定目标单词之前和之后的几个单词的上下文中的目标单词。
+# 这与语言建模不同，因为CBOW不是序列化的，也不一定是概率的。通常，CBOW用于快速训练单词嵌入，
+# 而这些嵌入用于初始化一些更复杂的模型的嵌入。通常，这被称为预训练嵌入(*pretraining embeddings*)。
+# 它几乎总是能帮助性能提升几个百分点。
 #
-# The CBOW model is as follows. Given a target word :math:`w_i` and an
-# :math:`N` context window on each side, :math:`w_{i-1}, \dots, w_{i-N}`
-# and :math:`w_{i+1}, \dots, w_{i+N}`, referring to all context words
-# collectively as :math:`C`, CBOW tries to minimize
+# CBOW 模型的形式化定义如下所示。 给定一个目标单词 :math:`w_i` 和 一个两边长度为 :math:`N` 的上下文窗口，
+# :math:`w_{i-1}, \dots, w_{i-N}` 和 :math:`w_{i+1}, \dots, w_{i+N}`, :math:`C` 指向所有上下文单词集体，
+# CBOW 试图去最小化
 #
 # .. math::  -\log p(w_i | C) = -\log \text{Softmax}(A(\sum_{w \in C} q_w) + b)
 #
-# where :math:`q_w` is the embedding for word :math:`w`.
+# 其中 :math:`q_w` 是单词 :math:`w` 的嵌入。
 #
-# Implement this model in Pytorch by filling in the class below. Some
-# tips:
+# 通过完善下面这个类在Pytorch中实现这个模型. 
+# 
+# 一些小建议:
 #
-# * Think about which parameters you need to define.
-# * Make sure you know what shape each operation expects. Use .view() if you need to
-#   reshape.
+# * 考虑一下你需要定义什么样的参数.
+# * 确保你知道每个操作的期望输入和输出的张量的shape。如果你需要reshape的话，使用 .view() 。
 #
 
 CONTEXT_SIZE = 2  # 2 words to the left, 2 to the right
@@ -330,8 +268,7 @@ class CBOW(nn.Module):
     def forward(self, inputs):
         pass
 
-# create your model and train.  here are some functions to help you make
-# the data ready for use by your module
+# 创建你的模型并训练。这里的一些函数可以帮你准备好你的module所需要的数据 
 
 
 def make_context_vector(context, word_to_ix):

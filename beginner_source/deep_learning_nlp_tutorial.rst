@@ -1,32 +1,26 @@
 使用Pytorch将深度学习用于NLP
 **********************************
 **Author**: `Robert Guthrie <https://github.com/rguthrie3/DeepLearningForNLPInPytorch>`_
+**翻译者**: `Antares <http://www.studyai.com/antares>`_
 
-This tutorial will walk you through the key ideas of deep learning
-programming using Pytorch. Many of the concepts (such as the computation
-graph abstraction and autograd) are not unique to Pytorch and are
-relevant to any deep learning toolkit out there.
+本教程将向您介绍如何使用PYTORCH进行深度学习编程的关键思想。
+许多概念(例如计算图抽象和自动梯度)并不是Pytorch独有的，
+而且与任何深度学习工具包都相关。
 
-I am writing this tutorial to focus specifically on NLP for people who
-have never written code in any deep learning framework (e.g, TensorFlow,
-Theano, Keras, Dynet). It assumes working knowledge of core NLP
-problems: part-of-speech tagging, language modeling, etc. It also
-assumes familiarity with neural networks at the level of an intro AI
-class (such as one from the Russel and Norvig book). Usually, these
-courses cover the basic backpropagation algorithm on feed-forward neural
-networks, and make the point that they are chains of compositions of
-linearities and non-linearities. This tutorial aims to get you started
-writing deep learning code, given you have this prerequisite knowledge.
+我编写本教程是为了专门针对那些从未在任何深度学习框架
+(例如，TensorFlow、Theano、Keras、Dynet)中编写代码的人编写NLP。
+它假定了核心NLP问题的相关知识：part-of-speech tagging, language modeling 等.
+它还假设在介绍AI类(如Russel和Norvig书中的一个)的水平上熟悉神经网络。
+这些课程通常涉及前馈神经网络的基本反向传播算法，并指出它们是线性和非线性的组合链。
+本教程旨在让您开始编写深度学习代码，如果您有这一先决条件的知识。
 
-Note this is about *models*, not data. For all of the models, I just
-create a few test examples with small dimensionality so you can see how
-the weights change as it trains. If you have some real data you want to
-try, you should be able to rip out any of the models from this notebook
-and use them on it.
+注意，这是关于模型(*models*)的，而不是数据。对于所有的模型，
+我只是创建了一些小维度的测试示例，这样您就可以看到在训练过程中权重是如何变化的。
+如果你有一些真实的数据，你想尝试，你应该能够从这个notebook上取出任何models，并使用它们。
 
 
 .. toctree::
-    :hidden:
+    :maxdepth: 1
 
     /beginner/nlp/pytorch_tutorial
     /beginner/nlp/deep_learning_tutorial

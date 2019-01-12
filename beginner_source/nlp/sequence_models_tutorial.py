@@ -1,37 +1,31 @@
 # -*- coding: utf-8 -*-
 r"""
-Sequence Models and Long-Short Term Memory Networks
+序列模型和长短时记忆网络(LSTM)
 ===================================================
 
-At this point, we have seen various feed-forward networks. That is,
-there is no state maintained by the network at all. This might not be
-the behavior we want. Sequence models are central to NLP: they are
-models where there is some sort of dependence through time between your
-inputs. The classical example of a sequence model is the Hidden Markov
-Model for part-of-speech tagging. Another example is the conditional
-random field.
+到目前为止，我们已经看到了各种各样的前馈网络(feed-forward networks)。
+也就是说，根本不存在由网络维护的状态(state)。
+这可能不是我们想要的行为。序列模型(Sequence models)是NLP的核心：
+它们是在输入之间通过时间存在某种依赖关系的模型。
+序列模型的经典例子是用于词性标注(part-of-speech tagging)的
+隐马尔可夫模型(Hidden Markov Model)。
+另一个例子是条件随机场(conditional random field)。
 
-A recurrent neural network is a network that maintains some kind of
-state. For example, its output could be used as part of the next input,
-so that information can propogate along as the network passes over the
-sequence. In the case of an LSTM, for each element in the sequence,
-there is a corresponding *hidden state* :math:`h_t`, which in principle
-can contain information from arbitrary points earlier in the sequence.
-We can use the hidden state to predict words in a language model,
-part-of-speech tags, and a myriad of other things.
+递归神经网络(recurrent neural network)是一种保持某种状态的网络。
+例如，它的输出可以作为下一个输入的一部分使用，以便信息可以在序列通过网络时在序列中传播。
+在LSTM的情况下，对于序列中的每个元素，都有相应的隐藏状态(:math:`h_t`)，
+原则上可以包含来自序列中较早的任意点的信息。
+我们可以利用隐藏状态来预测语言模型中的单词、词性标注(part-of-speech tags)以及无数其他事物。
 
 
-LSTM's in Pytorch
+Pytorch中的LSTM
 ~~~~~~~~~~~~~~~~~
 
-Before getting to the example, note a few things. Pytorch's LSTM expects
-all of its inputs to be 3D tensors. The semantics of the axes of these
-tensors is important. The first axis is the sequence itself, the second
-indexes instances in the mini-batch, and the third indexes elements of
-the input. We haven't discussed mini-batching, so lets just ignore that
-and assume we will always have just 1 dimension on the second axis. If
-we want to run the sequence model over the sentence "The cow jumped",
-our input should look like
+在开始这个示例之前，请注意以下几点。Pytorch的LSTM期望它的所有输入都是3D张量。
+这些张量的每个轴(axes)的语义很重要。第一个轴是序列本身，第二个轴索引batch中的样例，
+以及第三个轴索引输入的元素。我们还没有讨论过mini-batching，所以让我们忽略这一点，
+并假设我们总是只有1维在第二轴。如果我们想在"The cow jumped"这个句子上运行序列模型，
+我们的输入应该看起来像这样：
 
 .. math::
 
@@ -42,12 +36,11 @@ our input should look like
    q_\text{jumped}
    \end{bmatrix}
 
-Except remember there is an additional 2nd dimension with size 1.
+不过，请记住，还有一个额外的第二维,其size为1。
 
-In addition, you could go through the sequence one at a time, in which
-case the 1st axis will have size 1 also.
+此外，您可以一次遍历一遍序列，在这种情况下，第一轴的size也是1。
 
-Let's see a quick example.
+让我们看一个快速的例子。
 """
 
 # Author: Robert Guthrie
@@ -89,37 +82,34 @@ print(hidden)
 
 
 ######################################################################
-# Example: An LSTM for Part-of-Speech Tagging
+# 样例: 一种用于词性标注的LSTM
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# In this section, we will use an LSTM to get part of speech tags. We will
-# not use Viterbi or Forward-Backward or anything like that, but as a
-# (challenging) exercise to the reader, think about how Viterbi could be
-# used after you have seen what is going on.
+# 在这个小节中, 我们将使用 LSTM 来获得词性标注(part of speech tags)。
+# 我们将不会使用Viterbi 或 Forward-Backward 或 其他任何类似的技术,
+# 但是作为一个对读者稍微有挑战性的练习, 当你了解了这一切如何运转的时候
+# 再考虑一下如何使用 Viterbi。 
 #
-# The model is as follows: let our input sentence be
-# :math:`w_1, \dots, w_M`, where :math:`w_i \in V`, our vocab. Also, let
-# :math:`T` be our tag set, and :math:`y_i` the tag of word :math:`w_i`.
-# Denote our prediction of the tag of word :math:`w_i` by
-# :math:`\hat{y}_i`.
+# 模型如下: 假定我们的输入语句是 :math:`w_1, \dots, w_M`, 其中 :math:`w_i \in V`, 我们的词汇库。
+# 另外, 假定 :math:`T` 是我们的标记集合, 以及 :math:`y_i` 是单词 :math:`w_i` 的标记。
+# 把我们对单词 :math:`w_i` 的标记的预测记为 :math:`\hat{y}_i` 。
 #
-# This is a structure prediction, model, where our output is a sequence
-# :math:`\hat{y}_1, \dots, \hat{y}_M`, where :math:`\hat{y}_i \in T`.
-#
-# To do the prediction, pass an LSTM over the sentence. Denote the hidden
-# state at timestep :math:`i` as :math:`h_i`. Also, assign each tag a
-# unique index (like how we had word\_to\_ix in the word embeddings
-# section). Then our prediction rule for :math:`\hat{y}_i` is
+# 这是一个结构预测，模型，其中我们的输出是序列 :math:`\hat{y}_1, \dots, \hat{y}_M`,
+# 其中 :math:`\hat{y}_i \in T` 。
+# 
+# 为了进行预测, 在句子上传递一个LSTM(pass an LSTM over the sentence)。 
+# 在时间步(timestep) :math:`i` 的隐藏状态记为 :math:`h_i` 。
+# 另外，给每个tag分配一个唯一的index (就像在词嵌入章节中的 word\_to\_ix 一样)。
+# 然后，我们预测 :math:`\hat{y}_i` 的规则是：
 #
 # .. math::  \hat{y}_i = \text{argmax}_j \  (\log \text{Softmax}(Ah_i + b))_j
 #
-# That is, take the log softmax of the affine map of the hidden state,
-# and the predicted tag is the tag that has the maximum value in this
-# vector. Note this implies immediately that the dimensionality of the
-# target space of :math:`A` is :math:`|T|`.
+# 也就是说, 对 隐藏状态的仿射映射 取 对数软最大化(log softmax),
+# 并且预测出的tag是这个向量中的最大值对应的tag。
+# 请注意，这立即意味着 :math:`A` 的目标空间的维数为 :math:`|T|` 。
 #
 #
-# Prepare data:
+# 准备数据:
 
 def prepare_sequence(seq, to_ix):
     idxs = [to_ix[w] for w in seq]
@@ -144,7 +134,7 @@ EMBEDDING_DIM = 6
 HIDDEN_DIM = 6
 
 ######################################################################
-# Create the model:
+# 创建模型:
 
 
 class LSTMTagger(nn.Module):
@@ -180,7 +170,7 @@ class LSTMTagger(nn.Module):
         return tag_scores
 
 ######################################################################
-# Train the model:
+# 训练模型:
 
 
 model = LSTMTagger(EMBEDDING_DIM, HIDDEN_DIM, len(word_to_ix), len(tag_to_ix))
@@ -234,29 +224,25 @@ with torch.no_grad():
 
 
 ######################################################################
-# Exercise: Augmenting the LSTM part-of-speech tagger with character-level features
+# 练习: 使用字符级特征增强LSTM语义标注
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# In the example above, each word had an embedding, which served as the
-# inputs to our sequence model. Let's augment the word embeddings with a
-# representation derived from the characters of the word. We expect that
-# this should help significantly, since character-level information like
-# affixes have a large bearing on part-of-speech. For example, words with
-# the affix *-ly* are almost always tagged as adverbs in English.
+# 在上面的例子中，每个单词都有一个嵌入，作为序列模型的输入。
+# 让我们用 从单词的字符派生出来的表示 来增强 单词嵌入。
+# 我们希望这会有很大的帮助，因为词缀(affixes)之类的字符级信息对词性(part-of-speech)有很大的影响。
+# 例如，带有词缀 *-ly* 的词在英语中几乎总是被标记为副词(adverbs)。
 #
-# To do this, let :math:`c_w` be the character-level representation of
-# word :math:`w`. Let :math:`x_w` be the word embedding as before. Then
-# the input to our sequence model is the concatenation of :math:`x_w` and
-# :math:`c_w`. So if :math:`x_w` has dimension 5, and :math:`c_w`
-# dimension 3, then our LSTM should accept an input of dimension 8.
+# 为了做到这一点, 令 :math:`c_w` 是单词 :math:`w` 的字符级表示(character-level representation)。
+# 像之前一样，令 :math:`x_w` 是单词嵌入。 然后，我们序列模型的输入是 :math:`x_w` 和 :math:`c_w`
+# 的串接(concatenation)。因此，如果 :math:`x_w` 有 5 个维度, 并且 :math:`c_w` 的纬度是 3 ,
+# 那么我们的 LSTM 应该接受维数为8的输入。
 #
-# To get the character level representation, do an LSTM over the
-# characters of a word, and let :math:`c_w` be the final hidden state of
-# this LSTM. Hints:
+# 为了获得字符级表示, 在一个单词的若干字符上做LSTM ,并且令 :math:`c_w` 是这个LSTM的最终隐藏状态。
+# 
+# 提示:
 #
-# * There are going to be two LSTM's in your new model.
-#   The original one that outputs POS tag scores, and the new one that
-#   outputs a character-level representation of each word.
-# * To do a sequence model over characters, you will have to embed characters.
-#   The character embeddings will be the input to the character LSTM.
+# * 你的新模型将会有两个LSTM。原来的LSTM输出POS标签分数(POS tag scores),
+#   新的LSTM输出每个单词的字符级表示。
+# * 为了在字符集上建一个序列模型, 你必须嵌入字符(embed characters)。
+#   字符嵌入将会成为字符级LSTM的输入。
 #
