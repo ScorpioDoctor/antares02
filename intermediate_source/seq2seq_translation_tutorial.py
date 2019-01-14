@@ -1,11 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-使用序列到序列网络的翻译与注意
+使用序列到序列的网络和注意机制进行翻译
 *************************************************************
 **翻译者**: `Antares博士 <http://www.studyai.com/antares>`_
 
-In this project we will be teaching a neural network to translate from
-French to English.
+在这个项目中，我们将教一个神经网络，把法语翻译成英语。
 
 ::
 
@@ -27,50 +26,40 @@ French to English.
     = you re too skinny .
     < you re all alone .
 
-... to varying degrees of success.
+... 取得不同程度的成功。
 
-This is made possible by the simple but powerful idea of the `sequence
-to sequence network <http://arxiv.org/abs/1409.3215>`__, in which two
-recurrent neural networks work together to transform one sequence to
-another. An encoder network condenses an input sequence into a vector,
-and a decoder network unfolds that vector into a new sequence.
+这是因为简单而有力的 `序列到序列的网络 <http://arxiv.org/abs/1409.3215>`__ 思想，
+其中两个递归神经网络一起工作，将一个序列转换成另一个序列。
+编码器网络将输入序列压缩为向量，解码器网络将该向量展开为新序列。
 
 .. figure:: /_static/img/seq-seq-images/seq2seq.png
    :alt:
 
-To improve upon this model we'll use an `attention
-mechanism <https://arxiv.org/abs/1409.0473>`__, which lets the decoder
-learn to focus over a specific range of the input sequence.
+为了改进这个模型，我们将使用一种注意机制(`attention mechanism <https://arxiv.org/abs/1409.0473>`__)，
+它让解码器学会将注意力集中在输入序列的特定范围上。
 
-**Recommended Reading:**
+**推荐阅读:**
 
-I assume you have at least installed PyTorch, know Python, and
-understand Tensors:
+我假定你最近才安装了 PyTorch, 知道 Python, 并且理解 张量(Tensors)是什么东西:
 
--  https://pytorch.org/ For installation instructions
--  :doc:`/beginner/deep_learning_60min_blitz` to get started with PyTorch in general
--  :doc:`/beginner/pytorch_with_examples` for a wide and deep overview
--  :doc:`/beginner/former_torchies_tutorial` if you are former Lua Torch user
+-  https://pytorch.org/ 查看安装指南
+-  :doc:`/beginner/deep_learning_60min_blitz` 在这个章节获得PyTorch的起步知识
+-  :doc:`/beginner/pytorch_with_examples` 获得一个宽泛而有深度的概览
+-  :doc:`/beginner/former_torchies_tutorial` 如果您是前Lua Torch用户
 
 
-It would also be useful to know about Sequence to Sequence networks and
-how they work:
+如果了解 序列到序列网络(Sequence to Sequence networks) 并知道它们的工作原理将会很有用:
 
--  `Learning Phrase Representations using RNN Encoder-Decoder for
-   Statistical Machine Translation <http://arxiv.org/abs/1406.1078>`__
--  `Sequence to Sequence Learning with Neural
-   Networks <http://arxiv.org/abs/1409.3215>`__
--  `Neural Machine Translation by Jointly Learning to Align and
-   Translate <https://arxiv.org/abs/1409.0473>`__
--  `A Neural Conversational Model <http://arxiv.org/abs/1506.05869>`__
+-  `使用用于统计机器翻译的RNN编解码器学习短语表示 <http://arxiv.org/abs/1406.1078>`__
+-  `使用神经网络进行序列到序列的学习 <http://arxiv.org/abs/1409.3215>`__
+-  `联合学习对齐与翻译的神经机器翻译 <https://arxiv.org/abs/1409.0473>`__
+-  `一种神经会话模型 <http://arxiv.org/abs/1506.05869>`__
 
-You will also find the previous tutorials on
-:doc:`/intermediate/char_rnn_classification_tutorial`
-and :doc:`/intermediate/char_rnn_generation_tutorial`
-helpful as those concepts are very similar to the Encoder and Decoder
-models, respectively.
+你还会发现之前的教程 :doc:`/intermediate/char_rnn_classification_tutorial`
+和 :doc:`/intermediate/char_rnn_generation_tutorial` 是非常有帮助的，因为这些概念是与之前
+介绍过的Encoder 和 Decoder模型非常相似。
 
-And for more, read the papers that introduced these topics:
+要了解更多信息，请阅读介绍这些主题的论文:
 
 -  `Learning Phrase Representations using RNN Encoder-Decoder for
    Statistical Machine Translation <http://arxiv.org/abs/1406.1078>`__
@@ -81,7 +70,7 @@ And for more, read the papers that introduced these topics:
 -  `A Neural Conversational Model <http://arxiv.org/abs/1506.05869>`__
 
 
-**Requirements**
+**需要导入的包**
 """
 from __future__ import unicode_literals, print_function, division
 from io import open
@@ -98,40 +87,30 @@ import torch.nn.functional as F
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 ######################################################################
-# Loading data files
+# 加载数据文件
 # ==================
 #
-# The data for this project is a set of many thousands of English to
-# French translation pairs.
+# 这个项目的数据是一套成千上万的英法翻译对(English to French translation pairs)。
 #
-# `This question on Open Data Stack
-# Exchange <http://opendata.stackexchange.com/questions/3888/dataset-of-sentences-translated-into-many-languages>`__
-# pointed me to the open translation site http://tatoeba.org/ which has
-# downloads available at http://tatoeba.org/eng/downloads - and better
-# yet, someone did the extra work of splitting language pairs into
-# individual text files here: http://www.manythings.org/anki/
+# `在这个 Open Data Stack Exchange 上的问题 <http://opendata.stackexchange.com/questions/3888/dataset-of-sentences-translated-into-many-languages>`__
+# 把我指向一个开放翻译网站 http://tatoeba.org/ ，它有下载可用 http://tatoeba.org/eng/downloads - 
+# 更好的是，有人在这里做了额外的工作，将语言对分割成单独的文本文件: http://www.manythings.org/anki/
 #
-# The English to French pairs are too big to include in the repo, so
-# download to ``data/eng-fra.txt`` before continuing. The file is a tab
-# separated list of translation pairs:
+# 从英语到法语的配对太大，无法包含在仓库(repo)中，所以在继续之前请下载到 ``data/eng-fra.txt`` 。
+# 该文件是一个以tab分隔的翻译对列表:
 #
 # ::
 #
 #     I am cold.    J'ai froid.
 #
 # .. Note::
-#    Download the data from
-#    `here <https://download.pytorch.org/tutorial/data.zip>`_
-#    and extract it to the current directory.
+#    从 `这儿 <https://download.pytorch.org/tutorial/data.zip>`_ 下载数据，并且抽取到当前目录下。
 
 ######################################################################
-# Similar to the character encoding used in the character-level RNN
-# tutorials, we will be representing each word in a language as a one-hot
-# vector, or giant vector of zeros except for a single one (at the index
-# of the word). Compared to the dozens of characters that might exist in a
-# language, there are many many more words, so the encoding vector is much
-# larger. We will however cheat a bit and trim the data to only use a few
-# thousand words per language.
+# 类似于字符级rnn教程中使用的字符编码，我们将一种语言中的每个单词表示为one-hot vector，
+# 或除单个零向量(在单词索引处)外的巨大零向量。与某一种语言中可能存在的几十个字符相比，
+# 单词的数量可能大得多，因此编码向量要大得多。然而，我们将欺骗一点，并减少数据，
+# 使其每种语言只使用几千个单词。
 #
 # .. figure:: /_static/img/seq-seq-images/word-encoding.png
 #    :alt:
@@ -140,11 +119,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 ######################################################################
-# We'll need a unique index per word to use as the inputs and targets of
-# the networks later. To keep track of all this we will use a helper class
-# called ``Lang`` which has word → index (``word2index``) and index → word
-# (``index2word``) dictionaries, as well as a count of each word
-# ``word2count`` to use to later replace rare words.
+# 我们需要为每个单词分配一个唯一的索引以便在稍后用于网络的输入(inputs)和目标(targets)。为了跟踪这一切，
+# 我们将使用一个名为 ``Lang`` 的辅助类，该类具有word → index (``word2index``)字典和
+# index → word(``index2word``)字典，以及每个单词的数量(``word2count``)用于稍后替换稀有单词。
 #
 
 SOS_token = 0
@@ -174,12 +151,11 @@ class Lang:
 
 
 ######################################################################
-# The files are all in Unicode, to simplify we will turn Unicode
-# characters to ASCII, make everything lowercase, and trim most
-# punctuation.
+# 所有的文件都是Unicode编码的, 为了简化，我们将把Unicode编码的字符转变为ASCII,
+# 全部转换为小写，裁减掉标点符号。
 #
 
-# Turn a Unicode string to plain ASCII, thanks to
+# 把一个 Unicode 字符串转变为简单的 ASCII 字符串, 感谢
 # http://stackoverflow.com/a/518232/2809427
 def unicodeToAscii(s):
     return ''.join(
@@ -187,8 +163,7 @@ def unicodeToAscii(s):
         if unicodedata.category(c) != 'Mn'
     )
 
-# Lowercase, trim, and remove non-letter characters
-
+# 小写, 裁剪, 并移除非字母字符
 
 def normalizeString(s):
     s = unicodeToAscii(s.lower().strip())
@@ -198,10 +173,9 @@ def normalizeString(s):
 
 
 ######################################################################
-# To read the data file we will split the file into lines, and then split
-# lines into pairs. The files are all English → Other Language, so if we
-# want to translate from Other Language → English I added the ``reverse``
-# flag to reverse the pairs.
+# 要读取数据文件，我们将文件(file)拆分成行(lines)，然后将行(lines)拆分成对(pairs)。
+# 这些文件都是 英语→其他语言，因此，如果我们想要把其他语言翻译为英语，我添加了一个
+# ``reverse`` 标记来反转pairs。
 #
 
 def readLangs(lang1, lang2, reverse=False):
@@ -227,12 +201,9 @@ def readLangs(lang1, lang2, reverse=False):
 
 
 ######################################################################
-# Since there are a *lot* of example sentences and we want to train
-# something quickly, we'll trim the data set to only relatively short and
-# simple sentences. Here the maximum length is 10 words (that includes
-# ending punctuation) and we're filtering to sentences that translate to
-# the form "I am" or "He is" etc. (accounting for apostrophes replaced
-# earlier).
+# 因为有 *很多* 样例句子，我们想要快速地训练一些东西，所以我们将把数据集中到相对较短和简单的句子上。
+# 这里的最大长度是10个单词(包括结束标点符号)，我们过滤掉翻译成“I am”或“he is”等形式的句子。
+# (较早时用撇号代替)。
 #
 
 MAX_LENGTH = 10
@@ -258,11 +229,11 @@ def filterPairs(pairs):
 
 
 ######################################################################
-# The full process for preparing the data is:
+# 准备数据的全流程如下:
 #
-# -  Read text file and split into lines, split lines into pairs
-# -  Normalize text, filter by length and content
-# -  Make word lists from sentences in pairs
+# -  读取文本文件，拆分成行，将行拆分成对(pairs)
+# -  归一化文本，使用长度和内容过滤
+# -  从句子中制作单词对的列表
 #
 
 def prepareData(lang1, lang2, reverse=False):
@@ -288,35 +259,26 @@ print(random.choice(pairs))
 # The Seq2Seq Model
 # =================
 #
-# A Recurrent Neural Network, or RNN, is a network that operates on a
-# sequence and uses its own output as input for subsequent steps.
+# 循环神经网络(Recurrent Neural Network, or RNN) 是一种对序列进行操作并利用自己的输出作为后续步骤的输入的网络。
 #
-# A `Sequence to Sequence network <http://arxiv.org/abs/1409.3215>`__, or
-# seq2seq network, or `Encoder Decoder
-# network <https://arxiv.org/pdf/1406.1078v3.pdf>`__, is a model
-# consisting of two RNNs called the encoder and decoder. The encoder reads
-# an input sequence and outputs a single vector, and the decoder reads
-# that vector to produce an output sequence.
+# 一个序列到序列网络(`Sequence to Sequence network <http://arxiv.org/abs/1409.3215>`__) , 或
+# seq2seq 网络, 或 编码解码网络(`Encoder Decoder network <https://arxiv.org/pdf/1406.1078v3.pdf>`__), 是一个模型，
+# 它由两个称之为编码器和解码器的RNNs构成。编码器读取输入序列然后输出单个向量(single vector),而解码器读取编码器输出的那个向量
+# 然后再产生一个输出序列。
 #
 # .. figure:: /_static/img/seq-seq-images/seq2seq.png
 #    :alt:
 #
-# Unlike sequence prediction with a single RNN, where every input
-# corresponds to an output, the seq2seq model frees us from sequence
-# length and order, which makes it ideal for translation between two
-# languages.
+# 与使用单个RNN进行序列预测(在这里每一个输入对应一个输出)不一样，seq2seq 模型
+# 将我们从序列长度和顺序中解放出来，这使得它适合于两种语言之间的翻译(translation)。
 #
-# Consider the sentence "Je ne suis pas le chat noir" → "I am not the
-# black cat". Most of the words in the input sentence have a direct
-# translation in the output sentence, but are in slightly different
-# orders, e.g. "chat noir" and "black cat". Because of the "ne/pas"
-# construction there is also one more word in the input sentence. It would
-# be difficult to produce a correct translation directly from the sequence
-# of input words.
+# 请考虑句子 "Je ne suis pas le chat noir" → "I am not the black cat" 。
+# 输入句子的大多数单词在输出语句中都有直接的翻译，但是两个句子的顺序有些不一样，
+# e.g. "chat noir" 和 "black cat"。 因为 "ne/pas" 的构造，输入句子中还多出了一个单词。
+# 我们可以看到，如果从输入单词的序列直接产生一个正确的翻译是一件很难的事情。
 #
-# With a seq2seq model the encoder creates a single vector which, in the
-# ideal case, encodes the "meaning" of the input sequence into a single
-# vector — a single point in some N dimensional space of sentences.
+# 有了 seq2seq 模型之后，编码器创建一个单个向量(single vector)，这个向量，在理想情况下，编码了输入单词序列的意义("meaning")。
+# 该单个向量是句子的某个N维空间中的单个点。
 #
 
 
@@ -324,10 +286,8 @@ print(random.choice(pairs))
 # The Encoder
 # -----------
 #
-# The encoder of a seq2seq network is a RNN that outputs some value for
-# every word from the input sentence. For every input word the encoder
-# outputs a vector and a hidden state, and uses the hidden state for the
-# next input word.
+# seq2seq网络的编码器是一个RNN，它为来自输入句子中的每个单词输出一些值。对于每个输入单词，编码器输出一个向量和一个隐藏状态，
+# 并为下一个输入单词使用隐藏状态。
 #
 # .. figure:: /_static/img/seq-seq-images/encoder-network.png
 #    :alt:
@@ -355,24 +315,18 @@ class EncoderRNN(nn.Module):
 # The Decoder
 # -----------
 #
-# The decoder is another RNN that takes the encoder output vector(s) and
-# outputs a sequence of words to create the translation.
-#
-
+# 解码器是另一个RNN，它接受编码器输出向量并输出一系列单词以创建翻译。
+# 
 
 ######################################################################
-# Simple Decoder
+# 简单解码器
 # ^^^^^^^^^^^^^^
 #
-# In the simplest seq2seq decoder we use only last output of the encoder.
-# This last output is sometimes called the *context vector* as it encodes
-# context from the entire sequence. This context vector is used as the
-# initial hidden state of the decoder.
+# 在最简单的seq2seq解码器中，我们只使用编码器的最后输出。最后一个输出有时被称为上下文向量(*context vector*)，
+# 因为它从整个输入序列中编码上下文。该上下文向量用作解码器的初始隐藏状态。
 #
-# At every step of decoding, the decoder is given an input token and
-# hidden state. The initial input token is the start-of-string ``<SOS>``
-# token, and the first hidden state is the context vector (the encoder's
-# last hidden state).
+# 在解码的每一步，给解码器一个输入令牌和隐藏状态。初始输入令牌是字符串的起始 ``<SOS>`` 令牌，
+# 第一个隐藏状态是上下文向量(编码器的最后一个隐藏状态)。
 #
 # .. figure:: /_static/img/seq-seq-images/decoder-network.png
 #    :alt:
@@ -400,37 +354,29 @@ class DecoderRNN(nn.Module):
         return torch.zeros(1, 1, self.hidden_size, device=device)
 
 ######################################################################
-# I encourage you to train and observe the results of this model, but to
-# save space we'll be going straight for the gold and introducing the
-# Attention Mechanism.
+# 我鼓励你们训练和观察这个模型的结果，但为了节省空间，我们将直接奔着金牌去
+# (作者意思是直接给大家介绍最好的模型)，并引入注意机制(Attention Mechanism)。
 #
 
 
 ######################################################################
-# Attention Decoder
+# 注意力解码器
 # ^^^^^^^^^^^^^^^^^
 #
-# If only the context vector is passed betweeen the encoder and decoder,
-# that single vector carries the burden of encoding the entire sentence.
+# 如果只有上下文向量在编码器和解码器之间传递，那么该向量就承担了对整个句子进行编码的负担。
 #
-# Attention allows the decoder network to "focus" on a different part of
-# the encoder's outputs for every step of the decoder's own outputs. First
-# we calculate a set of *attention weights*. These will be multiplied by
-# the encoder output vectors to create a weighted combination. The result
-# (called ``attn_applied`` in the code) should contain information about
-# that specific part of the input sequence, and thus help the decoder
-# choose the right output words.
+# Attention允许解码器网络对自身输出的每一步“聚焦”编码器输出的不同部分。
+# 首先，我们计算了一组注意力权重(*attention weights*)。这些将被乘以编码器输出向量，以创建加权组合。
+# 结果(在代码中称为 ``attn_applied`` )应该包含有关输入序列的特定部分的信息，
+# 从而帮助解码器选择正确的输出单词。
 #
 # .. figure:: https://i.imgur.com/1152PYf.png
 #    :alt:
 #
-# Calculating the attention weights is done with another feed-forward
-# layer ``attn``, using the decoder's input and hidden state as inputs.
-# Because there are sentences of all sizes in the training data, to
-# actually create and train this layer we have to choose a maximum
-# sentence length (input length, for encoder outputs) that it can apply
-# to. Sentences of the maximum length will use all the attention weights,
-# while shorter sentences will only use the first few.
+# 利用解码器的输入和隐藏状态作为输入，用另一个前馈层 ``attn`` 进行注意力权值的计算。
+# 由于训练数据中有各种大小的句子，为了实际创建和训练这一层，我们必须选择一个
+# 最大的句子长度(输入长度，用于编码器输出)。最大长度的句子将使用所有的注意力权重，
+# 而较短的句子只使用前几个。
 #
 # .. figure:: /_static/img/seq-seq-images/attention-decoder-network.png
 #    :alt:
@@ -475,21 +421,18 @@ class AttnDecoderRNN(nn.Module):
 
 
 ######################################################################
-# .. note:: There are other forms of attention that work around the length
-#   limitation by using a relative position approach. Read about "local
-#   attention" in `Effective Approaches to Attention-based Neural Machine
-#   Translation <https://arxiv.org/abs/1508.04025>`__.
+# .. note:: 还有其他形式的注意力机制，通过使用相对位置方法，绕过长度限制。
+#   阅读 `基于注意力的神经机器翻译的有效方法 <https://arxiv.org/abs/1508.04025>`__ 
+#   中的“局部注意” 。
 #
-# Training
+# 训练
 # ========
 #
-# Preparing Training Data
+# 准备训练数据
 # -----------------------
 #
-# To train, for each pair we will need an input tensor (indexes of the
-# words in the input sentence) and target tensor (indexes of the words in
-# the target sentence). While creating these vectors we will append the
-# EOS token to both sequences.
+# 为了训练，对于每个pair我们将需要一个输入张量(输入句子中单词的索引)和目标张量(目标句子中单词的索引)。
+# 在创建这些向量时，我们将EOS令牌追加到这两个序列中。
 #
 
 def indexesFromSentence(lang, sentence):
@@ -509,30 +452,23 @@ def tensorsFromPair(pair):
 
 
 ######################################################################
-# Training the Model
+# 训练模型
 # ------------------
 #
-# To train we run the input sentence through the encoder, and keep track
-# of every output and the latest hidden state. Then the decoder is given
-# the ``<SOS>`` token as its first input, and the last hidden state of the
-# encoder as its first hidden state.
+# 为了训练，我们让输入语句通过编码器，并跟踪每个输出和最新的隐藏状态。
+# 然后，解码器被赋予 ``<SOS>`` 令牌作为它的第一个输入，编码器的最后一个隐藏状态
+# 作为它的第一个隐藏状态。
 #
-# "Teacher forcing" is the concept of using the real target outputs as
-# each next input, instead of using the decoder's guess as the next input.
-# Using teacher forcing causes it to converge faster but `when the trained
-# network is exploited, it may exhibit
-# instability <http://minds.jacobs-university.de/sites/default/files/uploads/papers/ESNTutorialRev.pdf>`__.
+# "教师强迫(Teacher forcing)" 是这样一个概念(concept),它将真正的目标输出作为下一个输入，
+# 而不是使用解码器的猜测作为下一个输入。使用教师强迫可以使其收敛更快，但是
+# `当经过训练的网络被利用(exploited)时，它可能会表现出不稳定性 
+# <http://minds.jacobs-university.de/sites/default/files/uploads/papers/ESNTutorialRev.pdf>`__ 。
 #
-# You can observe outputs of teacher-forced networks that read with
-# coherent grammar but wander far from the correct translation -
-# intuitively it has learned to represent the output grammar and can "pick
-# up" the meaning once the teacher tells it the first few words, but it
-# has not properly learned how to create the sentence from the translation
-# in the first place.
+# 你可以观察到教师强迫网络的输出-用连贯的语法阅读，却远离正确的翻译-直观地说，它已经学会了表示输出语法，
+# 并且一旦老师告诉它前几个单词，它就可以“捡起(pick up)”意义，但它一开始就没有学会如何从翻译中创造句子。
 #
-# Because of the freedom PyTorch's autograd gives us, we can randomly
-# choose to use teacher forcing or not with a simple if statement. Turn
-# ``teacher_forcing_ratio`` up to use more of it.
+# 由于PyTorch的autograd给我们的自由，我们可以使用一条简单的if语句随机选择使用老师强迫或不使用。
+# 把 ``teacher_forcing_ratio`` 提高到更多地使用它。
 #
 
 teacher_forcing_ratio = 0.5
@@ -591,8 +527,7 @@ def train(input_tensor, target_tensor, encoder, decoder, encoder_optimizer, deco
 
 
 ######################################################################
-# This is a helper function to print time elapsed and estimated time
-# remaining given the current time and progress %.
+# 这是一个辅助函数，用于在给定消逝的时间和进度百分比的情况下打印经过的时间和估计的剩余时间。
 #
 
 import time
@@ -614,15 +549,14 @@ def timeSince(since, percent):
 
 
 ######################################################################
-# The whole training process looks like this:
+# 整个训练过程如下 :
 #
-# -  Start a timer
-# -  Initialize optimizers and criterion
-# -  Create set of training pairs
-# -  Start empty losses array for plotting
+# -  开启一个计时器
+# -  初始化优化器和准则
+# -  创建一组训练对(training pairs)
+# -  准备一个空损失数组用于绘图
 #
-# Then we call ``train`` many times and occasionally print the progress (%
-# of examples, time so far, estimated time) and average loss.
+# 然后我们调用 ``train`` 很多次，并且偶尔打印进度 (样例百分比, 目前所花费时间, 估计剩余时间) 和 平均损失。
 #
 
 def trainIters(encoder, decoder, n_iters, print_every=1000, plot_every=100, learning_rate=0.01):
@@ -662,11 +596,10 @@ def trainIters(encoder, decoder, n_iters, print_every=1000, plot_every=100, lear
 
 
 ######################################################################
-# Plotting results
+# 绘制结果
 # ----------------
 #
-# Plotting is done with matplotlib, using the array of loss values
-# ``plot_losses`` saved while training.
+# 绘图是使用matplotlib完成的，使用训练时保存的损失值 ``plot_losses`` 的数组。
 #
 
 import matplotlib.pyplot as plt
@@ -685,14 +618,12 @@ def showPlot(points):
 
 
 ######################################################################
-# Evaluation
+# 评估
 # ==========
 #
-# Evaluation is mostly the same as training, but there are no targets so
-# we simply feed the decoder's predictions back to itself for each step.
-# Every time it predicts a word we add it to the output string, and if it
-# predicts the EOS token we stop there. We also store the decoder's
-# attention outputs for display later.
+# 评估过程的大部分与训练是相同的，但没有目标函数，所以我们简单地在每一步将解码器的预测反馈给自己。
+# 每次它预测一个单词时，我们都会将它添加到输出字符串中，如果它预测到EOS令牌，就会停止。
+# 我们还存储解码器的注意力输出，以供以后显示。
 #
 
 def evaluate(encoder, decoder, sentence, max_length=MAX_LENGTH):
@@ -732,8 +663,8 @@ def evaluate(encoder, decoder, sentence, max_length=MAX_LENGTH):
 
 
 ######################################################################
-# We can evaluate random sentences from the training set and print out the
-# input, target, and output to make some subjective quality judgements:
+# 我们可以从训练集中对随机句子进行评估，并打印出输入、目标和输出，
+# 从而做出一些主观的质量判断：
 #
 
 def evaluateRandomly(encoder, decoder, n=10):
@@ -748,22 +679,18 @@ def evaluateRandomly(encoder, decoder, n=10):
 
 
 ######################################################################
-# Training and Evaluating
+# 训练 和 评估
 # =======================
 #
-# With all these helper functions in place (it looks like extra work, but
-# it makes it easier to run multiple experiments) we can actually
-# initialize a network and start training.
+# 有了所有这些辅助函数(它看起来像是额外的工作，但它使运行多个实验更容易)，
+# 我们实际上就可以初始化一个网络并开始训练。
 #
-# Remember that the input sentences were heavily filtered. For this small
-# dataset we can use relatively small networks of 256 hidden nodes and a
-# single GRU layer. After about 40 minutes on a MacBook CPU we'll get some
-# reasonable results.
+# 记住，输入的句子是经过严格过滤的。对于这个小数据集，我们可以使用相对较小的网络，
+# 包括256个隐藏节点和一个GRU层。在MacBook的CPU上大约40分钟后，我们将得到一些合理的结果。
 #
 # .. Note::
-#    If you run this notebook you can train, interrupt the kernel,
-#    evaluate, and continue training later. Comment out the lines where the
-#    encoder and decoder are initialized and run ``trainIters`` again.
+#    如果你运行这个notebook，你可以训练，中断内核，评估，并在以后继续训练。
+#    对编码器和解码器初始化的行进行注释，并再次运行 ``trainIters`` 。
 #
 
 hidden_size = 256
@@ -779,17 +706,14 @@ evaluateRandomly(encoder1, attn_decoder1)
 
 
 ######################################################################
-# Visualizing Attention
+# 可视化注意力网络输出
 # ---------------------
 #
-# A useful property of the attention mechanism is its highly interpretable
-# outputs. Because it is used to weight specific encoder outputs of the
-# input sequence, we can imagine looking where the network is focused most
-# at each time step.
+# 注意力机制的一个有用的特性是其高度可解释的输出。由于它用于加权编码器输出的特定部分，
+# 因此我们可以查看在每个时间步网络最聚焦的输出部分是哪里。
 #
-# You could simply run ``plt.matshow(attentions)`` to see attention output
-# displayed as a matrix, with the columns being input steps and rows being
-# output steps:
+# 您只需简单运行 ``plt.matshow(attentions)`` 就可以将注意力输出显示为一个矩阵，
+# 其中矩阵的列是输入步(input steps)，矩阵的行是输出步(output steps)：
 #
 
 output_words, attentions = evaluate(
@@ -798,8 +722,7 @@ plt.matshow(attentions.numpy())
 
 
 ######################################################################
-# For a better viewing experience we will do the extra work of adding axes
-# and labels:
+# 为了获得更好的可视化体验，我们将做额外的工作，添加轴和标签：
 #
 
 def showAttention(input_sentence, output_words, attentions):
@@ -839,25 +762,22 @@ evaluateAndShowAttention("c est un jeune directeur plein de talent .")
 
 
 ######################################################################
-# Exercises
+# 练习
 # =========
 #
-# -  Try with a different dataset
+# -  尝试使用不同的数据集
 #
 #    -  Another language pair
 #    -  Human → Machine (e.g. IOT commands)
 #    -  Chat → Response
 #    -  Question → Answer
 #
-# -  Replace the embeddings with pre-trained word embeddings such as word2vec or
-#    GloVe
-# -  Try with more layers, more hidden units, and more sentences. Compare
-#    the training time and results.
-# -  If you use a translation file where pairs have two of the same phrase
-#    (``I am test \t I am test``), you can use this as an autoencoder. Try
-#    this:
+# -  将嵌入替换为预先训练过的单词嵌入，例如 word2vec 或 GloVe。
+# -  尝试用更多的层，更多的隐藏单元，更多的句子。比较训练时间和结果。
+# -  如果您使用一个翻译文件，其中 pairs 有两个相同的短语(``I am test \t I am test``)，
+#    则可以将其用作自动编码器。试试这个:
 #
-#    -  Train as an autoencoder
-#    -  Save only the Encoder network
-#    -  Train a new Decoder for translation from there
+#    -  作为自编码器进行训练
+#    -  只保存编码器网络
+#    -  训练一个解码器用于翻译
 #
