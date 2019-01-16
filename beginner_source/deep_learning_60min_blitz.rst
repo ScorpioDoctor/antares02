@@ -17,10 +17,11 @@
 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
 
    /beginner/blitz/tensor_tutorial
    /beginner/blitz/autograd_tutorial
+   /beginner/blitz/regression_tutorial
    /beginner/blitz/neural_networks_tutorial
    /beginner/blitz/cifar10_tutorial
    /beginner/blitz/data_parallel_tutorial
@@ -32,6 +33,10 @@
 .. galleryitem:: /beginner/blitz/autograd_tutorial.py
     :figure: /_static/img/autodiff.png
     :intro: 什么是自动微分？
+
+.. galleryitem:: /beginner/blitz/regression_tutorial.py
+    :figure: /_static/img/regression.png
+    :intro: PyTorch求解线性回归问题
 
 .. galleryitem:: /beginner/blitz/neural_networks_tutorial.py
     :figure: /_static/img/mnist.png

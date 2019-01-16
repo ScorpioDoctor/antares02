@@ -53,6 +53,24 @@
    :tooltip: 使用 torch.nn 创建和训练神经网络
    :description: :doc:`beginner/nn_tutorial`
 
+.. customgalleryitem::
+   :figure: _static/img/distributed/DistPyTorch.jpg
+   :tooltip: PyTorch多进程训练测试共享内存的模型
+   :description: :doc:`beginner/multiprocessing_tutorial`
+
+
+.. raw:: html
+
+    <div style='clear:both'></div>
+
+自动编码器
+----------------------
+
+.. customgalleryitem::
+   :figure: /_static/img/fanshionmnist.png
+   :tooltip: 随机梯度和变分自动编码器
+   :description: :doc:`beginner/variational_autoencoder_tutorial`
+
 
 .. raw:: html
 
@@ -61,6 +79,31 @@
 
 图像与视觉
 ----------------------
+
+.. customgalleryitem::
+   :figure: /_static/img/fanshionmnist.png
+   :tooltip: FanshionMNIST dataset
+   :description: :doc:`beginner/fanshionmnist_tutorial`
+
+.. customgalleryitem::
+   :figure: /_static/img/cifar100.png
+   :tooltip: cifar100 dataset
+   :description: :doc:`beginner/cifar100_tutorial`
+
+.. customgalleryitem::
+   :figure: /_static/img/stl10.png
+   :tooltip: cifar100 dataset
+   :description: :doc:`beginner/stl10_tutorial`
+
+.. customgalleryitem::
+   :figure: /_static/img/svhn.png
+   :tooltip: SVHN dataset
+   :description: :doc:`beginner/svhn_tutorial`
+
+.. customgalleryitem::
+   :figure: /_static/img/mscoco0.png
+   :tooltip: mscoco dataset
+   :description: :doc:`beginner/pycoco_tutorial`
 
 .. customgalleryitem::
    :figure: /_static/img/thumbnails/eye.png
@@ -83,6 +126,11 @@
    :description: :doc:`beginner/fgsm_tutorial`
 
 .. customgalleryitem::
+   :figure: /_static/img/rabbit.jpg
+   :tooltip: 使用子像素CNN实现超分辨率
+   :description: :doc:`intermediate/super_resolution_tutorial`
+
+.. customgalleryitem::
    :figure: /_static/img/cat.jpg
    :tooltip: 使用ONNX将pytorch中定义的模型转换为onnx格式，然后将其加载到caffe2中
    :description: :doc:`advanced/super_resolution_with_caffe2`
@@ -99,6 +147,11 @@
    :figure: /_static/img/chat.png
    :tooltip: 训练一个语音分类器
    :description: :doc:`beginner/audio_classifier_tutorial`
+
+.. customgalleryitem::
+   :figure: /_static/img/chat.png
+   :tooltip: 训练一个时间序列预测模型
+   :description: :doc:`beginner/time_sequence_tutorial`
 
 .. raw:: html
 
@@ -127,6 +180,11 @@
     :tooltip: 探索使用pytorch进行深度学习编程的关键概念
     :figure: /_static/img/thumbnails/babel.jpg
     :description: :doc:`/beginner/deep_learning_nlp_tutorial`
+
+.. customgalleryitem::
+    :tooltip: 单词级语言模型RNN
+    :figure: /_static/img/thumbnails/babel.jpg
+    :description: :doc:`/intermediate/word_language_model_tutorial`
 
 .. galleryitem:: intermediate/seq2seq_translation_tutorial.py
   :figure: _static/img/seq2seq_flat.png
@@ -230,6 +288,16 @@
    beginner/deploy_seq2seq_hybrid_frontend_tutorial
    beginner/saving_loading_models
    beginner/nn_tutorial
+   beginner/multiprocessing_tutorial
+
+.. toctree::
+   :maxdepth: 2
+   :includehidden:
+   :hidden:
+   :caption: 自动编码器
+
+   beginner/variational_autoencoder_tutorial
+
 
 .. toctree::
    :maxdepth: 2
@@ -237,11 +305,18 @@
    :hidden:
    :caption: 图像与视觉
 
+   beginner/fanshionmnist_tutorial
+   beginner/cifar100_tutorial
+   beginner/stl10_tutorial
+   beginner/svhn_tutorial
+   beginner/pycoco_tutorial
    beginner/finetuning_torchvision_models_tutorial
    intermediate/spatial_transformer_tutorial
    advanced/neural_style_tutorial
    beginner/fgsm_tutorial
+   intermediate/super_resolution_tutorial
    advanced/super_resolution_with_caffe2
+   
 
 .. toctree::
    :maxdepth: 2
@@ -250,6 +325,7 @@
    :caption: 音频与语音
 
    beginner/audio_classifier_tutorial
+   beginner/time_sequence_tutorial
 
 
 .. toctree::
@@ -263,6 +339,7 @@
    intermediate/char_rnn_classification_tutorial
    beginner/deep_learning_nlp_tutorial
    intermediate/seq2seq_translation_tutorial
+   intermediate/word_language_model_tutorial
 
 .. toctree::
    :maxdepth: 2
