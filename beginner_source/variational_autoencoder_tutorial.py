@@ -18,7 +18,7 @@ import torch.utils.data
 from torch import nn, optim
 from torch.nn import functional as F
 from torchvision import datasets, transforms
-from torchvision.utils import save_image
+from torchvision.utils import save_image, make_grid
 
 #############################################################################################
 # 全局参数
@@ -53,6 +53,33 @@ train_loader = torch.utils.data.DataLoader(
 test_loader = torch.utils.data.DataLoader(
     datasets.MNIST('./data', train=False, transform=transforms.ToTensor()),
     batch_size=args.batch_size, shuffle=True, **kwargs)
+
+#############################################################################################
+# 显示图像数据集
+# -----------------------
+
+import numpy as np
+import matplotlib.pyplot as plt
+# 打开交互模式
+plt.ion()
+
+# 用于显示一张图像的函数
+def imshow(img,title=None):
+    npimg = img.numpy()
+    plt.figure()
+    plt.tight_layout()
+    plt.imshow(np.transpose(npimg, (1, 2, 0)))
+    plt.axis('off')
+    plt.title(title)
+    plt.show(block=False)
+    plt.pause(0.1)
+
+# 获取一个批次的图像，一次迭代取出batch_size张图片
+dataiter = iter(train_loader)
+images, labels = dataiter.next()
+print(images[:16].size())
+# 显示16张图像
+imshow(make_grid(images[:16]), "The Original Digits Images")
 
 #############################################################################################
 # 定义变分自动编码器模型
@@ -150,8 +177,11 @@ def test(epoch):
                 n = min(data.size(0), 8)
                 comparison = torch.cat([data[:n],
                                       recon_batch.view(args.batch_size, 1, 28, 28)[:n]])
-                save_image(comparison.cpu(),
-                         'results/reconstruction_' + str(epoch) + '.png', nrow=n)
+                # 下面这个函数保存图像的时候有问题，不知啥原因
+                # save_image(comparison.cpu(), 'results/reconstruction_' + str(epoch) + '.png', nrow=n)
+                if epoch % 2 == 0:
+                    # 显示最后的一次epoch后解码图像与原图像作对比
+                    imshow(make_grid(comparison), "First Row:Original Images,Sencond Row:Decoded Images")
 
     test_loss /= len(test_loader.dataset)
     print('====> Test set loss: {:.4f}'.format(test_loss))
@@ -161,11 +191,13 @@ def test(epoch):
 # 开始训练和测试
 # -----------------------
 
-if __name__ == "__main__":
-    for epoch in range(1, args.epochs + 1):
+for epoch in range(1, args.epochs + 1):
         train(epoch)
         test(epoch)
         with torch.no_grad():
-            sample = torch.randn(64, 20).to(device)
+            sample = torch.randn(16, 20).to(device)
             sample = model.decode(sample).cpu()
-            save_image(sample.view(64, 1, 28, 28), 'results/sample_' + str(epoch) + '.png')
+            # 下面这个函数保存图像的时候有问题，不知啥原因
+            # save_image(sample.view(16, 1, 28, 28), 'results/sample_' + str(epoch) + '.png')
+            if epoch % 2 == 0:
+                imshow(make_grid(sample.view(16, 1, 28, 28)),"Decoded Images From Gaussian Data")
