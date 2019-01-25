@@ -1,48 +1,36 @@
 使用自定义C++算子扩展TorchScript 
 ===============================================
 
-The PyTorch 1.0 release introduced a new programming model to PyTorch called
-`TorchScript <https://pytorch.org/docs/master/jit.html>`_. TorchScript is a
-subset of the Python programming language which can be parsed, compiled and
-optimized by the TorchScript compiler. Further, compiled TorchScript models have
-the option of being serialized into an on-disk file format, which you can
-subsequently load and run from pure C++ (as well as Python) for inference.
+PyTorch1.0发行版向PyTorch引入了一个新的编程模型，称为 `TorchScript <https://pytorch.org/docs/master/jit.html>`_ 。
+TorchScript是Python编程语言的一个子集，可以由TorchScript编译器进行解析、编译和优化。
+此外，编译后的TorchScript模型可以选择序列化为磁盘上的文件格式，
+您可以随后从纯C++(以及Python)加载和运行该格式的文件以进行推断。
 
-TorchScript supports a large subset of operations provided by the ``torch``
-package, allowing you to express many kinds of complex models purely as a series
-of tensor operations from PyTorch's "standard library". Nevertheless, there may
-be times where you find yourself in need of extending TorchScript with a custom
-C++ or CUDA function. While we recommend that you only resort to this option if
-your idea cannot be expressed (efficiently enough) as a simple Python function,
-we do provide a very friendly and simple interface for defining custom C++ and
-CUDA kernels using `ATen <https://pytorch.org/cppdocs/#aten>`_, PyTorch's high
-performance C++ tensor library. Once bound into TorchScript, you can embed these
-custom kernels (or "ops") into your TorchScript model and execute them both in
-Python and in their serialized form directly in C++.
+TorchScript支持 ``torch`` 包提供的大量操作，允许您将许多复杂模型表示为PyTorch的“标准库”中的一系列张量操作。
+尽管如此，有时您可能会发现自己需要使用自定义C++或CUDA函数扩展TorchScript。
+虽然我们建议您只在您的想法不能(足够有效地)表示为一个简单的Python函数时才使用此选项，
+但我们确实提供了一个非常友好和简单的接口，用于使用PyTorch的高性能C++张量库
+`ATen <https://pytorch.org/cppdocs/#aten>`_ 定义自定义C++和CUDA内核。
+一旦绑定到TorchScript，您就可以将这些自定义内核(或“Ops”)嵌入到您的TorchScript模型中，
+并以Python的形式运行它们 或者 以它们的序列化形式直接在C++中运行它们。
 
-The following paragraphs give an example of writing a TorchScript custom op to
-call into `OpenCV <https://www.opencv.org>`_, a computer vision library written
-in C++. We will discuss how to work with tensors in C++, how to efficiently
-convert them to third party tensor formats (in this case, OpenCV ``Mat``s), how
-to register your operator with the TorchScript runtime and finally how to
-compile the operator and use it in Python and C++.
+下面的段落给出了一个编写TorchScript自定义OP以调用 `OpenCV <https://www.opencv.org>`_ 的示例，
+OpenCV是用C++编写的计算机视觉库。
+我们将讨论如何使用C++中的张量，如何有效地将它们转换为第三方张量格式(在本例中，是OpenCV的 ``Mat`` )，
+如何在TorchScript运行时注册运算符，以及如何编译运算符并在Python和C++中使用它。
 
-This tutorial assumes you have the *preview release* of PyTorch 1.0 installed
-via ``pip`` or `conda`. See https://pytorch.org/get-started/locally for
-instructions on grabbing the latest release of PyTorch 1.0. Alternatively, you
-can compile PyTorch from source. The documentation in `this file
-<https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md>`_ will assist
-you with this.
+本教程假设您已经通过 ``pip`` 或 `conda` 安装了PyTorch 1.0的预览版本。
+请参阅https://pytorch.org/get-started/local了解获取最新版本pytorch 1.0的说明。
+或者，您可以从源代码编译pytorch。此 `文件中的文档 <https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md>`_
+将帮助您完成此操作。
 
-Implementing the Custom Operator in C++
+在C++中实现自定义操作符
 ---------------------------------------
 
-For this tutorial, we'll be exposing the `warpPerspective
-<https://docs.opencv.org/2.4/modules/imgproc/doc/geometric_transformations.html#warpperspective>`_
-function, which applies a perspective transformation to an image, from OpenCV to
-TorchScript as a custom operator. The first step is to write the implementation
-of our custom operator in C++. Let's call the file for this implementation
-``op.cpp`` and make it look like this:
+在本教程中，我们将以自定义操作符的形式向外暴露 
+`warpPerspective <https://docs.opencv.org/2.4/modules/imgproc/doc/geometric_transformations.html#warpperspective>`_ 
+函数，该函数将透视变换应用于图像，从OpenCV到TorchScript的自定义操作算子。第一步是用C++编写自定义操作符的实现。
+让我们调用这个实现 ``op.cpp`` 的文件，使其看起来如下:
 
 .. code-block:: cpp
 
@@ -66,38 +54,31 @@ of our custom operator in C++. Let's call the file for this implementation
     return output.clone();
   }
 
-The code for this operator is quite short. At the top of the file, we include
-the OpenCV header file, ``opencv2/opencv.hpp``, alongside the ``torch/script.h``
-header which exposes all the necessary goodies from PyTorch's C++ API that we
-need to write custom TorchScript operators. Our function ``warp_perspective``
-takes two arguments: an input ``image`` and the ``warp`` transformation matrix
-we wish to apply to the image. The type of these inputs is ``torch::Tensor``,
-PyTorch's tensor type in C++ (which is also the underlying type of all tensors
-in Python). The return type of our ``warp_perspective`` function will also be a
-``torch::Tensor``.
+这个操作符的代码很短。在文件的顶部，我们包括OpenCV头文件 ``opencv2/opencv.hpp`` ，以及 ``torch/script.h`` 头文件，
+它向外暴露了PyTorch的C++ API中编写自定义TorchScript操作符所需的所有必需的好东西。
+我们的函数 ``warp_perspective`` 有两个参数：输入 ``image`` 和我们希望应用于图像的 ``warp`` 变换矩阵。
+这些输入的类型是 ``torch::Tensor`` ，PyTorch在C++中的张量类型(它也是Python中所有张量的底层类型)。
+我们的 ``warp_perspective`` 函数的返回类型也将是一个 ``torch::Tensor`` 。
 
 .. tip::
 
-  See `this note <https://pytorch.org/cppdocs/notes/tensor_basics.html>`_ for
-  more information about ATen, the library that provides the ``Tensor`` class to
-  PyTorch. Further, `this tutorial
-  <https://pytorch.org/cppdocs/notes/tensor_creation.html>`_ describes how to
-  allocate and initialize new tensor objects in C++ (not required for this
-  operator).
+  查看 `这个笔记 <https://pytorch.org/cppdocs/notes/tensor_basics.html>`_ 获得更多关于ATen的信息，
+  这个库为PyTorch提供了 ``Tensor`` 类。
+  更进一步, `这个教程 <https://pytorch.org/cppdocs/notes/tensor_creation.html>`_ 
+  描述了在C++中如何分配和初始化新的tensor对象(该例子的操作算子不需要).
 
 .. attention::
 
-  The TorchScript compiler understands a fixed number of types. Only these types
-  can be used as arguments to your custom operator. Currently these types are:
+  TorchScript 编译器可以理解一个固定数量的类型。只有这些类型可以用作你的自定义操作符的参数。
+  目前这些类型包括:
   ``torch::Tensor``, ``torch::Scalar``, ``double``, ``int64_t`` and
   ``std::vector``s of these types. Note that __only__ ``double`` and __not__
   ``float``, and __only__ ``int64_t`` and __not__ other integral types such as
   ``int``, ``short`` or ``long`` are supported.
 
-Inside of our function, the first thing we need to do is convert our PyTorch
-tensors to OpenCV matrices, as OpenCV's ``warpPerspective`` expects ``cv::Mat``
-objects as inputs. Fortunately, there is a way to do this **without copying
-any** data. In the first few lines,
+在我们的函数中，我们需要做的第一件事是将我们的PyTorch张量转换为OpenCV矩阵，
+正如OpenCV的 ``warpPerspective`` 期望 ``cv::Mat`` 对象作为输入。幸运的是，
+有一种方法可以在不复制任何数据的情况下做到这一点。在前几行，
 
 .. code-block:: cpp
 
