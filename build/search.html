@@ -1,0 +1,532 @@
+
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Search &mdash; PyTorch Tutorials 1.0.0 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <!-- <link rel="stylesheet" href="_static/pygments.css" type="text/css" /> -->
+  <link rel="stylesheet" href="_static/gallery.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="#" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+</head>
+
+<div class="container-fluid header-holder tutorials-header" id="header-holder">
+  <div class="container">
+    <div class="header-container">
+      <a class="header-logo" href="https://pytorch.org/" aria-label="PyTorch"></a>
+
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="https://pytorch.org/get-started">开 始</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/features">特 色</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/ecosystem">生 态</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/blog/">博 客</a>
+          </li>
+
+          <li class="active">
+            <a href="#">教 程</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">文 档</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/resources">资 源</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+
+      <a class="main-menu-open-button" href="#" data-behavior="open-mobile-menu"></a>
+    </div>
+
+  </div>
+</div>
+
+
+<body class="pytorch-body">
+
+   
+
+    
+
+    <div class="table-of-contents-link-wrapper">
+      <span>Table of Contents</span>
+      <a href="#" class="toggle-table-of-contents" data-behavior="toggle-table-of-contents"></a>
+    </div>
+
+    <nav data-toggle="wy-nav-shift" class="pytorch-left-menu" id="pytorch-left-menu">
+      <div class="pytorch-side-scroll">
+        <div class="pytorch-menu pytorch-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          <div class="pytorch-left-menu-search">
+            
+
+            
+              
+              
+                <div class="version">
+                  1.0.0
+                </div>
+              
+            
+
+            
+
+
+  
+
+
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="#" method="get">
+    <input type="text" name="q" placeholder="Search Tutorials" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+            
+          </div>
+
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">开始起步</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="beginner/deep_learning_60min_blitz.html">用PyTorch进行深度学习: 60分钟闪电战</a></li>
+<li class="toctree-l1"><a class="reference internal" href="beginner/data_loading_tutorial.html">数据加载和处理教程</a></li>
+<li class="toctree-l1"><a class="reference internal" href="beginner/pytorch_with_examples.html">学习 PyTorch 的 Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="beginner/transfer_learning_tutorial.html">迁移学习教程</a></li>
+<li class="toctree-l1"><a class="reference internal" href="beginner/deploy_seq2seq_hybrid_frontend_tutorial.html">使用混合前端部署seq2seq模型</a></li>
+<li class="toctree-l1"><a class="reference internal" href="beginner/saving_loading_models.html">保存和加载模型</a></li>
+<li class="toctree-l1"><a class="reference internal" href="beginner/nn_tutorial.html"><cite>torch.nn</cite> 究竟是神马东东？</a></li>
+<li class="toctree-l1"><a class="reference internal" href="beginner/multiprocessing_tutorial.html">PyTorch多进程共享内存</a></li>
+</ul>
+<p class="caption"><span class="caption-text">自动编码器</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="beginner/variational_autoencoder_tutorial.html">变分自动编码器</a></li>
+</ul>
+<p class="caption"><span class="caption-text">图像与视觉</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="beginner/fanshionmnist_tutorial.html">在FASHION-MNIST上训练CNN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="beginner/cifar100_tutorial.html">在CIFAR100上训练CNN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="beginner/stl10_tutorial.html">在STL10数据集上训练CNN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="beginner/svhn_tutorial.html">在SVHN数据集上训练CNN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="beginner/pycoco_tutorial.html">MSCOCO数据集的加载读取</a></li>
+<li class="toctree-l1"><a class="reference internal" href="beginner/finetuning_torchvision_models_tutorial.html">微调 Torchvision 模型</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intermediate/spatial_transformer_tutorial.html">空间变换网络(STN)教程</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced/neural_style_tutorial.html">使用 PyTorch 进行神经风格迁移</a></li>
+<li class="toctree-l1"><a class="reference internal" href="beginner/fgsm_tutorial.html">对抗样本生成</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intermediate/super_resolution_tutorial.html">使用亚像素CNN实现超分辨率</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced/super_resolution_with_caffe2.html">使用ONNX把模型从PyTorch迁移到Caffe2和Mobile</a></li>
+</ul>
+<p class="caption"><span class="caption-text">音频与语音</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="beginner/audio_classifier_tutorial.html">音频分类器教程</a></li>
+<li class="toctree-l1"><a class="reference internal" href="beginner/time_sequence_tutorial.html">时间序列预测</a></li>
+</ul>
+<p class="caption"><span class="caption-text">文本与语言</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="beginner/chatbot_tutorial.html">聊天机器人教程</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intermediate/char_rnn_generation_tutorial.html">使用字符级RNN生成名字</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intermediate/char_rnn_classification_tutorial.html">使用字符级RNN对名字分类</a></li>
+<li class="toctree-l1"><a class="reference internal" href="beginner/deep_learning_nlp_tutorial.html">使用Pytorch将深度学习用于NLP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intermediate/seq2seq_translation_tutorial.html">使用序列到序列的网络和注意机制进行翻译</a></li>
+<li class="toctree-l1"><a class="reference internal" href="intermediate/word_language_model_tutorial.html">单词级语言模型RNN</a></li>
+</ul>
+<p class="caption"><span class="caption-text">生成式模型</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="beginner/dcgan_faces_tutorial.html">DCGAN 教程</a></li>
+</ul>
+<p class="caption"><span class="caption-text">强化学习</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="intermediate/reinforcement_q_learning.html">强化学习 (DQN) 教程</a></li>
+</ul>
+<p class="caption"><span class="caption-text">扩展 PyTorch</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="advanced/numpy_extensions_tutorial.html">使用 numpy 和 scipy 创建扩展</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced/cpp_extension.html">自定义 C++ 和 CUDA 扩展</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced/torch_script_custom_ops.html">使用自定义C++算子扩展TorchScript</a></li>
+</ul>
+<p class="caption"><span class="caption-text">生产中使用</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="intermediate/dist_tuto.html">用PYTORCH编写分布式应用程序</a></li>
+<li class="toctree-l1"><a class="reference internal" href="beginner/aws_distributed_training_tutorial.html">使用Amazon AWS的PyTorch 1.0分布式训练器</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced/ONNXLive.html">ONNX 教程</a></li>
+<li class="toctree-l1"><a class="reference internal" href="advanced/cpp_export.html">在C++中加载PyTorch模型</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <div class="pytorch-container">
+      <div class="pytorch-page-level-bar" id="pytorch-page-level-bar">
+        <div class="pytorch-breadcrumbs-wrapper">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="pytorch-breadcrumbs">
+    
+      <li>
+        <a href="index.html">
+          
+            Tutorials
+          
+        </a> &gt;
+      </li>
+
+        
+      <li>Search</li>
+    
+    
+      <li class="pytorch-breadcrumbs-aside">
+        
+            
+        
+      </li>
+    
+  </ul>
+
+  
+</div>
+        </div>
+
+        <div class="pytorch-shortcuts-wrapper" id="pytorch-shortcuts-wrapper">
+          章节标题
+        </div>
+      </div>
+
+      <section data-toggle="wy-nav-shift" id="pytorch-content-wrap" class="pytorch-content-wrap">
+        <div class="pytorch-content-left">
+          
+          <div class="rst-content">
+          
+            <div role="main" class="main-content" itemscope="itemscope" itemtype="http://schema.org/Article">
+             <article itemprop="articleBody" id="pytorch-article" class="pytorch-article">
+              
+  <noscript>
+  <div id="fallback" class="admonition warning">
+    <p class="last">
+      Please activate JavaScript to enable the search
+      functionality.
+    </p>
+  </div>
+  </noscript>
+
+  
+  <div id="search-results">
+  
+  </div>
+
+             </article>
+             
+            </div>
+            <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2017, PyTorch.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+          </div>
+        </div>
+
+        <div class="pytorch-content-right" id="pytorch-content-right">
+          <div class="pytorch-right-menu" id="pytorch-right-menu">
+            <div class="pytorch-side-scroll" id="pytorch-side-scroll-right">
+              
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+  
+
+
+  
+
+     
+       <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+         <script type="text/javascript" src="_static/jquery.js"></script>
+         <script type="text/javascript" src="_static/underscore.js"></script>
+         <script type="text/javascript" src="_static/doctools.js"></script>
+         <script type="text/javascript" src="_static/language_data.js"></script>
+         <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+         <script type="text/javascript" src="_static/searchtools.js"></script>
+     
+
+  
+
+  <script type="text/javascript" src="_static/js/vendor/popper.min.js"></script>
+  <script type="text/javascript" src="_static/js/vendor/bootstrap.min.js"></script>
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+  <script type="text/javascript">
+    jQuery(function() { Search.loadIndex("searchindex.js"); });
+  </script>
+  
+  <script type="text/javascript" id="searchindexloader"></script>
+  
+ 
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-90545585-2', 'auto');
+  ga('send', 'pageview');
+
+</script>
+<img height="1" width="1" style="border-style:none;" alt="" src="http://www.googleadservices.com/pagead/conversion/795629140/?label=txkmCPmdtosBENSssfsC&amp;guid=ON&amp;script=0"/>
+
+
+
+  <!-- Begin Footer -->
+
+  <div class="container-fluid docs-tutorials-resources" id="docs-tutorials-resources">
+    <div class="container">
+      <div class="row">
+        <div class="col-md-4 text-center">
+          <h2>Docs</h2>
+          <p>Access comprehensive developer documentation for PyTorch</p>
+          <a class="with-right-arrow" href="https://pytorch.org/docs/stable/index.html">View Docs</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Tutorials</h2>
+          <p>Get in-depth tutorials for beginners and advanced developers</p>
+          <a class="with-right-arrow" href="#">View Tutorials</a>
+        </div>
+
+        <div class="col-md-4 text-center">
+          <h2>Resources</h2>
+          <p>Find development resources and get your questions answered</p>
+          <a class="with-right-arrow" href="https://pytorch.org/resources">View Resources</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-footer">
+    <div class="container footer-container">
+      <div class="footer-logo-wrapper">
+        <a href="https://pytorch.org/" class="footer-logo"></a>
+      </div>
+
+      <div class="footer-links-wrapper">
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://pytorch.org/">PyTorch</a></li>
+            <li><a href="https://pytorch.org/get-started">Get Started</a></li>
+            <li><a href="https://pytorch.org/features">Features</a></li>
+            <li><a href="https://pytorch.org/ecosystem">Ecosystem</a></li>
+            <li><a href="https://pytorch.org/blog/">Blog</a></li>
+            <li><a href="https://pytorch.org/resources">Resources</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col">
+          <ul>
+            <li class="list-title"><a href="https://pytorch.org/support">Support</a></li>
+            <li><a href="#">Tutorials</a></li>
+            <li><a href="https://pytorch.org/docs/stable/index.html">Docs</a></li>
+            <li><a href="https://discuss.pytorch.org" target="_blank">Discuss</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/issues" target="_blank">Github Issues</a></li>
+            <li><a href="https://pytorch.slack.com" target="_blank">Slack</a></li>
+            <li><a href="https://github.com/pytorch/pytorch/blob/master/CONTRIBUTING.md" target="_blank">Contributing</a></li>
+          </ul>
+        </div>
+
+        <div class="footer-links-col follow-us-col">
+          <ul>
+            <li class="list-title">Follow Us</li>
+            <li>
+              <div id="mc_embed_signup">
+                <form
+                  action="https://twitter.us14.list-manage.com/subscribe/post?u=75419c71fe0a935e53dfa4a3f&id=91d0dccd39"
+                  method="post"
+                  id="mc-embedded-subscribe-form"
+                  name="mc-embedded-subscribe-form"
+                  class="email-subscribe-form validate"
+                  target="_blank"
+                  novalidate>
+                  <div id="mc_embed_signup_scroll" class="email-subscribe-form-fields-wrapper">
+                    <div class="mc-field-group">
+                      <label for="mce-EMAIL" style="display:none;">Email Address</label>
+                      <input type="email" value="" name="EMAIL" class="required email" id="mce-EMAIL" placeholder="Email Address">
+                    </div>
+
+                    <div id="mce-responses" class="clear">
+                      <div class="response" id="mce-error-response" style="display:none"></div>
+                      <div class="response" id="mce-success-response" style="display:none"></div>
+                    </div>    <!-- real people should not fill this in and expect good things - do not remove this or risk form bot signups-->
+
+                    <div style="position: absolute; left: -5000px;" aria-hidden="true"><input type="text" name="b_75419c71fe0a935e53dfa4a3f_91d0dccd39" tabindex="-1" value=""></div>
+
+                    <div class="clear">
+                      <input type="submit" value="" name="subscribe" id="mc-embedded-subscribe" class="button email-subscribe-button">
+                    </div>
+                  </div>
+                </form>
+              </div>
+
+            </li>
+          </ul>
+
+          <div class="footer-social-icons">
+            <a href="https://www.facebook.com/pytorch" target="_blank" class="facebook"></a>
+            <a href="https://twitter.com/pytorch" target="_blank" class="twitter"></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- End Footer -->
+
+  <!-- Begin Mobile Menu -->
+
+  <div class="mobile-main-menu">
+    <div class="container-fluid">
+      <div class="container">
+        <div class="mobile-main-menu-header-container">
+          <a class="header-logo" href="https://pytorch.org/" aria-label="PyTorch"></a>
+          <a class="main-menu-close-button" href="#" data-behavior="close-mobile-menu"></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mobile-main-menu-links-container">
+      <div class="main-menu">
+        <ul>
+          <li>
+            <a href="#">Get Started</a>
+          </li>
+
+          <li>
+            <a href="#">Features</a>
+          </li>
+
+          <li>
+            <a href="#">Ecosystem</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/blog/">Blog</a>
+          </li>
+
+          <li class="active">
+            <a href="#">Tutorials</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/docs/stable/index.html">Docs</a>
+          </li>
+
+          <li>
+            <a href="https://pytorch.org/resources">Resources</a>
+          </li>
+
+          <li>
+            <a href="https://github.com/pytorch/pytorch">Github</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- End Mobile Menu -->
+
+  <script type="text/javascript" src="_static/js/vendor/anchor.min.js"></script>
+
+  <script type="text/javascript">
+    $(document).ready(function() {
+      mobileMenu.bind();
+      mobileTOC.bind();
+      pytorchAnchors.bind();
+      sideMenus.bind();
+      scrollToAnchor.bind();
+      highlightNavigation.bind();
+
+      // Add class to links that have code blocks, since we cannot create links in code blocks
+      $("article.pytorch-article a span.pre").each(function(e) {
+        $(this).closest("a").addClass("has-code");
+      });
+    })
+  </script>
+</body>
+</html>
